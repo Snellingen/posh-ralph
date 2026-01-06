@@ -1,7 +1,7 @@
 # Ralph (Copilot CLI runner)
 
 
-[About](#about-ralph) | [prd.json format](#plansprdjson-format) | [Install/update Copilot CLI](#install--update-copilot-cli-standalone) | [ralph.sh (looped runner)](#ralphsh-looped-runner) | [ralph-once.sh (single run)](#ralph-oncesh-single-run) | [Demo](#demo) 
+[About](#about-ralph) | [prd.json format](#plansprdjson-format) | [Install/update Copilot CLI](#install--update-copilot-cli-standalone) | [ralph.sh (looped runner)](#ralphsh-looped-runner) | [ralph-once.sh (single run)](#ralph-oncesh-single-run) | [test-coverage-ralph.sh](#test-coverage-ralphsh) | [Demo](#demo) 
 
 
 ## About Ralph
@@ -26,6 +26,7 @@ You’ll find two helper scripts:
 
 - **`ralph.sh`** — runs Copilot in a loop for _N_ iterations (stops early if Copilot prints `<promise>COMPLETE</promise>`).
 - **`ralph-once.sh`** — runs Copilot exactly once (useful for quick testing / dry-runs).
+- **`test-coverage-ralph.sh`** — runs Copilot in a loop to iteratively improve test coverage (one meaningful test per iteration).
 
 
 
@@ -41,7 +42,8 @@ https://github.com/user-attachments/assets/221b4b44-d6ac-455c-86e9-66baa470953d
 │   └── prd.json
 ├── progress.txt
 ├── ralph.sh
-└── ralph-once.sh
+├── ralph-once.sh
+└── test-coverage-ralph.sh
 ```
 
 
@@ -50,7 +52,7 @@ https://github.com/user-attachments/assets/221b4b44-d6ac-455c-86e9-66baa470953d
 
 See the [`plans/`](plans/) folder for more context.
 
-`plans/prd.json` is a JSON array where each entry is a “work item” or “acceptance test”:
+`plans/prd.json` is a JSON array where each entry is a “work item”, “acceptance test” or “user story”:
 
 ```json
 [
@@ -147,7 +149,7 @@ copilot --model gpt-5.2 -p "Hello"
 
 ### In the scripts (recommended pattern)
 
-Both scripts read a `MODEL` environment variable and default to `gpt-5.2` if not set:
+All scripts read a `MODEL` environment variable and default to `gpt-5.2` if not set:
 
 ```bash
 MODEL="${MODEL:-gpt-5.2}"
@@ -195,6 +197,21 @@ The prompt includes:
 
 
 
+## `test-coverage-ralph.sh`
+
+This script applies the Ralph loop to test coverage:
+
+- Each iteration runs `pnpm coverage` to find gaps.
+- Copilot writes **one** meaningful test (or uses `/* v8 ignore ... */` for low-value code).
+- Copilot commits the change and appends notes to `test-coverage-progress.txt`.
+
+### Usage
+```bash
+./test-coverage-ralph.sh 10
+```
+
+
+
 ## Notes on permissions / safety
 
 Copilot CLI supports tool permission flags like:
@@ -223,6 +240,10 @@ Adjust these to match your comfort level and CI/CD setup.
    ./ralph.sh 20
    ```
 4. Review `progress.txt` for a running log of changes and next steps.
+5. (Optional) Improve tests iteratively:
+  ```bash
+  ./test-coverage-ralph.sh 10
+  ```
 
 ## Demo
 
@@ -271,6 +292,10 @@ Run Ralph in an isolated sandbox using a `git worktree` so you can delete everyt
   git -C "$ROOT_DIR" branch -D ralph-demo
   ```
 
+## Credits
+
+- Inspired by [Matt Pocock’s thread on the Ralph Wiggum technique](https://x.com/mattpocockuk/status/2007924876548637089).
+- Prompt in scripts: [Matt Pocock](https://github.com/mattpocock)
 
 ## License
 

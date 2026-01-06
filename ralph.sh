@@ -35,7 +35,7 @@ PROMPT
 )
 
 for ((i=1; i<=iterations; i++)); do
-  echo "Iteration $i"
+  echo -e "\nIteration $i"
   echo "------------------------------------"
 
   # Copilot may return non-zero (auth/rate limit/etc). Don't let that kill the loop.
