@@ -1,5 +1,9 @@
 # Ralph (Copilot CLI runner)
 
+
+[About](#about-ralph) | [prd.json format](#plansprdjson-format) | [Install/update Copilot CLI](#install--update-copilot-cli-standalone) | [ralph.sh (looped runner)](#ralphsh-looped-runner) | [ralph-once.sh (single run)](#ralph-oncesh-single-run) | [Demo](#demo) 
+
+
 ## About Ralph
 
 Ralph is a small runner around **GitHub Copilot CLI (standalone)** inspired by [the“Ralph Wiggum” technique](https://www.humanlayer.dev/blog/brief-history-of-ralph): run a coding agent from a clean slate, over and over, until a stop condition is met.
@@ -43,6 +47,8 @@ https://github.com/user-attachments/assets/221b4b44-d6ac-455c-86e9-66baa470953d
 
 
 ## `plans/prd.json` format
+
+See the [`plans/`](plans/) folder for more context.
 
 `plans/prd.json` is a JSON array where each entry is a “work item” or “acceptance test”:
 
