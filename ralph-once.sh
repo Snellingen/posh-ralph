@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Default model if not provided
-MODEL="${MODEL:-gpt-5}"
+MODEL="${MODEL:-gpt-5.2}"
 
 PROMPT=$(
   cat <<'PROMPT'

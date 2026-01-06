@@ -134,21 +134,21 @@ Then inside the Copilot prompt:
 
 ### One command
 ```bash
-copilot --model gpt-5 -p "Hello"
+copilot --model gpt-5.2 -p "Hello"
 ```
 
 ### In the scripts (recommended pattern)
 
-Both scripts read a `MODEL` environment variable and default to `gpt-5` if not set:
+Both scripts read a `MODEL` environment variable and default to `gpt-5.2` if not set:
 
 ```bash
-MODEL="${MODEL:-gpt-5}"
+MODEL="${MODEL:-gpt-5.2}"
 ```
 
 Run with a specific model like this:
 
 ```bash
-MODEL=claude-sonnet-4.5 ./ralph-once.sh
+MODEL=claude-opus-4.5 ./ralph-once.sh
 ```
 
 
