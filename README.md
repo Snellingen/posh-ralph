@@ -224,8 +224,9 @@ Run Ralph in an isolated sandbox using a `git worktree` so you can delete everyt
 
 1. From the repo root, create a worktree on a new branch:
   ```bash
-  git worktree add ../ralph-demo -b ralph-demo
-  cd ../ralph-demo
+  ROOT_DIR="$PWD"
+  git worktree add "$ROOT_DIR/../ralph-demo" -b ralph-demo
+  cd "$ROOT_DIR/../ralph-demo"
   ```
 
 2. (Optional) Confirm Copilot CLI is available:
@@ -251,9 +252,17 @@ Run Ralph in an isolated sandbox using a `git worktree` so you can delete everyt
 
 6. Clean up (removes the worktree folder and deletes the demo branch):
   ```bash
-  cd -
-  git worktree remove ../ralph-demo
-  git branch -D ralph-demo
+  # IMPORTANT: run worktree commands against the same repo you created the worktree from.
+  # Using `git -C "$ROOT_DIR" ...` avoids relying on `cd -` (which can change across shells).
+
+  git -C "$ROOT_DIR" worktree list
+  git -C "$ROOT_DIR" worktree remove "$ROOT_DIR/../ralph-demo" || true
+
+  # If you deleted the folder manually, prune stale worktree metadata then re-check:
+  # git -C "$ROOT_DIR" worktree prune
+  # git -C "$ROOT_DIR" worktree list
+
+  git -C "$ROOT_DIR" branch -D ralph-demo
   ```
 
 
