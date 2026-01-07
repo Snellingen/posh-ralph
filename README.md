@@ -32,6 +32,9 @@ You’ll find three helper scripts:
 > You should adjust the prompt/instructions in the scripts to suit your project and workflow.
 
 
+## Example output
+
+Here’s an example of what running `MODEL=claude-opus-4.5 ./ralph-once.sh` might look like:
 
 https://github.com/user-attachments/assets/221b4b44-d6ac-455c-86e9-66baa470953d
 
