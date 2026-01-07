@@ -3,6 +3,7 @@
 
 [About](#about-ralph) | [prd.json format](#plansprdjson-format) | [Install/update Copilot CLI](#install--update-copilot-cli-standalone) | [ralph.sh (looped runner)](#ralphsh-looped-runner) | [ralph-once.sh (single run)](#ralph-oncesh-single-run) | [Demo](#demo) 
 
+> Also available for WordPress: [soderlind/ralph-wp](https://github.com/soderlind/ralph-wp)
 
 ## About Ralph
 
