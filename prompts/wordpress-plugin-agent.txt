@@ -1,5 +1,5 @@
 Work in the current repo. Use these files as your source of truth:
-- plans/prd.json
+- The PRD JSON file provided via @... (do not assume its path)
 - progress.txt
 
 1. Find the highest-priority feature to work on and work only on that feature.
@@ -9,7 +9,9 @@ Work in the current repo. Use these files as your source of truth:
    - composer lint
    - composer test (PHPUnit + Brain Monkey)
    - npm run build
-3. Update the PRD with the work that was done (plans/prd.json).
+   Do NOT run or mention pnpm checks unless the PRD explicitly requires it.
+   Only claim a check passed if you actually ran it; otherwise say it was not run and why.
+3. Update the PRD JSON file with the work that was done.
 4. Append your progress to progress.txt.
    Use this to leave a note for the next person working in the codebase.
 5. Make a git commit of that feature.

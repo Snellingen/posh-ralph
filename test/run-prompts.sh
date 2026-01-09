@@ -61,6 +61,23 @@ if [[ ${#PROMPT_FILES[@]} -eq 0 ]]; then
   exit 1
 fi
 
+render_progress() {
+  local current="$1"
+  local total="$2"
+  local label="$3"
+  local width=28
+  local filled=$(( current * width / total ))
+  local empty=$(( width - filled ))
+  local bar_filled bar_empty
+
+  printf -v bar_filled "%*s" "$filled" ""
+  bar_filled=${bar_filled// /#}
+  printf -v bar_empty "%*s" "$empty" ""
+  bar_empty=${bar_empty// /-}
+
+  printf "\r[%s%s] %d/%d %s" "$bar_filled" "$bar_empty" "$current" "$total" "$label" >&2
+}
+
 echo "Logging to: $RUN_LOG_DIR"
 
 echo "prompt\tstatus\tworktree" >"$RUN_LOG_DIR/summary.tsv"
@@ -69,18 +86,34 @@ run_one_prompt() {
   local prompt_path="$1"
   local prompt_file
   local prompt_name
+  local prd_file
+  local prd_src
   local wt_dir
   local branch
   local log_file
 
   prompt_file="$(basename "$prompt_path")"
   prompt_name="${prompt_file%.txt}"
+  prd_file="plans/prd-${prompt_name}.json"
+  prd_src="$ROOT/$prd_file"
 
   wt_dir="$ROOT/test/worktrees/${TS}-${prompt_name}"
   branch="ralph-test/${TS}-${prompt_name}"
   log_file="$RUN_LOG_DIR/${prompt_name}.log"
 
   mkdir -p "$(dirname "$wt_dir")"
+
+  # Prefer per-prompt PRDs, but fall back to the default PRD when none exists.
+  if [[ ! -r "$prd_src" ]]; then
+    prd_file="plans/prd.json"
+    prd_src="$ROOT/$prd_file"
+    if [[ ! -r "$prd_src" ]]; then
+      echo "Error: default PRD file not readable: $prd_file" | tee -a "$log_file" >&2
+      echo "Hint: create it at: $prd_src" | tee -a "$log_file" >&2
+      echo -e "${prompt_file}\tSKIP(missing-prd)\t-" >>"$RUN_LOG_DIR/summary.tsv"
+      return 0
+    fi
+  fi
 
   # Ensure cleanup even if the copilot run fails.
   cleanup() {
@@ -96,14 +129,26 @@ run_one_prompt() {
 
   pushd "$wt_dir" >/dev/null
 
+  # Use the current working tree versions of prompts and runner scripts so tests
+  # reflect local changes even if they aren't committed yet.
+  mkdir -p prompts
+  cp "$ROOT/prompts/$prompt_file" "prompts/$prompt_file"
+  cp "$ROOT/ralph-once.sh" ./ralph-once.sh
+  chmod +x ./ralph-once.sh
+
   # Prompt-specific tool policy (kept in the runner, not in prompt files).
   # Feel free to tweak these mappings as you add more prompts.
   declare -a args
-  args=("--prompt" "prompts/$prompt_file")
+  mkdir -p "$(dirname "$prd_file")"
+  cp "$prd_src" "$prd_file"
+
+  args=("--prompt" "prompts/$prompt_file" "--prd" "$prd_file")
 
   case "$prompt_file" in
     wordpress-plugin-agent.txt)
       args+=("--allow-profile" "safe")
+      args+=("--allow-tools" "write")
+      args+=("--allow-tools" "shell(git)")
       args+=("--allow-tools" "shell(npx)")
       args+=("--allow-tools" "shell(composer)")
       args+=("--allow-tools" "shell(npm)")
@@ -124,6 +169,18 @@ run_one_prompt() {
   local status=$?
   set -e
 
+  # Basic expectations for certain prompts.
+  if [[ "$prompt_file" == "wordpress-plugin-agent.txt" ]]; then
+    if ! grep -qiE "wp-env start|composer lint|composer test" "$log_file"; then
+      echo "[ASSERT] Missing expected WordPress checks in output" | tee -a "$log_file" >&2
+      status=2
+    fi
+    if grep -qiE "\bpnpm\b" "$log_file"; then
+      echo "[ASSERT] Unexpected pnpm mention in output" | tee -a "$log_file" >&2
+      status=2
+    fi
+  fi
+
   popd >/dev/null
 
   if [[ $status -eq 0 ]]; then
@@ -135,8 +192,15 @@ run_one_prompt() {
   return 0
 }
 
+total_prompts=${#PROMPT_FILES[@]}
+current_prompt=0
+
 for p in "${PROMPT_FILES[@]}"; do
+  current_prompt=$((current_prompt + 1))
+  render_progress "$current_prompt" "$total_prompts" "$(basename "$p")"
   run_one_prompt "$p" || true
 done
+
+printf "\n" >&2
 
 echo "Done. Summary: $RUN_LOG_DIR/summary.tsv"

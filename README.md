@@ -29,7 +29,7 @@ You’ll find two helper scripts:
 - **`ralph-once.sh`** — runs Copilot exactly once (useful for quick testing / dry-runs).
 
 
-> You should adjust the prompt/instructions in the scripts to suit your project and workflow.
+> The default prompt lives in prompts/default.txt. Adjust it to suit your project and workflow.
 
 
 ## Example output
@@ -185,14 +185,24 @@ MODEL=claude-opus-4.5 ./ralph-once.sh
 
 When using `--prompt`, you must also specify either `--allow-profile` or one or more `--allow-tools`.
 
+If you provide any `--allow-tools`, they become the full allowlist (they replace the profile/default allowed tools).
+
 ```bash
 ./ralph.sh --prompt prompts/my-prompt.txt --allow-profile safe 10
+```
+
+Use a prompt-specific PRD file:
+
+```bash
+./ralph.sh --prompt prompts/my-prompt.txt --prd plans/prd-wordpress.json --allow-profile safe 10
 ```
 
 Example: WordPress-oriented prompt (from `ralph-wp`), with explicit shell tools:
 
 ```bash
 ./ralph.sh --prompt prompts/wordpress-plugin-agent.txt --allow-profile safe \
+  --allow-tools write \
+  --allow-tools 'shell(git)' \
   --allow-tools 'shell(npx)' \
   --allow-tools 'shell(composer)' \
   --allow-tools 'shell(npm)' \
@@ -218,7 +228,7 @@ Add extra denied tools (repeatable):
 
 ### How it prompts Copilot
 The prompt includes:
-- `@plans/prd.json`
+- `@<prd file>` (defaults to `@plans/prd.json`)
 - `@progress.txt`
 
 …plus instructions to implement **one** feature, run checks, update files, and commit.

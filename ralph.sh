@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompts/default.txt"
+
 usage() {
   cat <<USAGE
 Usage:
-  $0 [--prompt <file>] [--allow-profile <safe|dev|locked>] [--allow-tools <toolSpec> ...] [--deny-tools <toolSpec> ...] <iterations>
+  $0 [--prompt <file>] [--prd <file>] [--allow-profile <safe|dev|locked>] [--allow-tools <toolSpec> ...] [--deny-tools <toolSpec> ...] <iterations>
 
 Options:
-  --prompt <file>           Load prompt text from file (otherwise use built-in default).
+  --prompt <file>           Load prompt text from file (otherwise use prompts/default.txt).
+  --prd <file>              Use a specific PRD JSON file (default: plans/prd.json).
   --allow-profile <name>    Tool permission profile: safe | dev | locked.
   --allow-tools <toolSpec>  Allow a specific tool (repeatable). Example: --allow-tools write
                             Use quotes if the spec includes spaces: --allow-tools 'shell(git push)'
@@ -20,9 +24,12 @@ USAGE
 }
 
 prompt_file=""
+prd_file="plans/prd.json"
 allow_profile=""
 declare -a allow_tools
 declare -a deny_tools
+allow_tools=()
+deny_tools=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,6 +41,25 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       prompt_file="$1"
+      shift
+      ;;
+    --prd)
+      shift
+      if [[ $# -lt 1 || -z "${1:-}" ]]; then
+        echo "Error: --prd requires a file path" >&2
+        usage
+        exit 1
+      fi
+      prd_file="$1"
+      shift
+      ;;
+    --prd=*)
+      prd_file="${1#--prd=}"
+      if [[ -z "$prd_file" ]]; then
+        echo "Error: --prd requires a file path" >&2
+        usage
+        exit 1
+      fi
       shift
       ;;
     --allow-profile)
@@ -102,30 +128,25 @@ iterations="$1"
 # Default model if not provided
 MODEL="${MODEL:-gpt-5.2}"
 
-PROMPT=$(
-  cat <<'PROMPT'
-Work in the current repo. Use these files as your source of truth:
-- plans/prd.json
-- progress.txt
-
-1. Find the highest-priority feature to work on and work only on that feature.
-   This should be the one YOU decide has the highest priority - not necessarily the first in the list.
-2. Check that the types check via pnpm typecheck and that the tests pass via pnpm test.
-3. Update the PRD with the work that was done (plans/prd.json).
-4. Append your progress to progress.txt.
-   Use this to leave a note for the next person working in the codebase.
-5. Make a git commit of that feature.
-ONLY WORK ON A SINGLE FEATURE.
-If, while implementing the feature, you notice the PRD is complete, output <promise>COMPLETE</promise>.
-PROMPT
-)
-
+PROMPT=""
 if [[ -n "$prompt_file" ]]; then
   if [[ ! -r "$prompt_file" ]]; then
     echo "Error: prompt file not readable: $prompt_file" >&2
     exit 1
   fi
   PROMPT="$(cat "$prompt_file")"
+else
+  if [[ ! -r "$DEFAULT_PROMPT_FILE" ]]; then
+    echo "Error: default prompt file not readable: $DEFAULT_PROMPT_FILE" >&2
+    echo "Hint: create it or pass --prompt <file>" >&2
+    exit 1
+  fi
+  PROMPT="$(cat "$DEFAULT_PROMPT_FILE")"
+fi
+
+if [[ ! -r "$prd_file" ]]; then
+  echo "Error: PRD file not readable: $prd_file" >&2
+  exit 1
 fi
 
 if [[ -n "$prompt_file" ]] && [[ -z "$allow_profile" ]] && [[ ${#allow_tools[@]} -eq 0 ]]; then
@@ -140,35 +161,37 @@ declare -a copilot_tool_args
 copilot_tool_args+=(--deny-tool 'shell(rm)')
 copilot_tool_args+=(--deny-tool 'shell(git push)')
 
-if [[ -n "$allow_profile" ]]; then
-  case "$allow_profile" in
-    dev)
+if [[ ${#allow_tools[@]} -eq 0 ]]; then
+  if [[ -n "$allow_profile" ]]; then
+    case "$allow_profile" in
+      dev)
+        copilot_tool_args+=(--allow-all-tools)
+        copilot_tool_args+=(--allow-tool 'write')
+        copilot_tool_args+=(--allow-tool 'shell(pnpm)')
+        copilot_tool_args+=(--allow-tool 'shell(git)')
+        ;;
+      safe)
+        copilot_tool_args+=(--allow-tool 'write')
+        copilot_tool_args+=(--allow-tool 'shell(pnpm)')
+        copilot_tool_args+=(--allow-tool 'shell(git)')
+        ;;
+      locked)
+        copilot_tool_args+=(--allow-tool 'write')
+        ;;
+      *)
+        echo "Error: unknown --allow-profile: $allow_profile" >&2
+        usage
+        exit 1
+        ;;
+    esac
+  else
+    # Preserve previous default behavior when not using a custom prompt.
+    if [[ -z "$prompt_file" ]]; then
       copilot_tool_args+=(--allow-all-tools)
       copilot_tool_args+=(--allow-tool 'write')
       copilot_tool_args+=(--allow-tool 'shell(pnpm)')
       copilot_tool_args+=(--allow-tool 'shell(git)')
-      ;;
-    safe)
-      copilot_tool_args+=(--allow-tool 'write')
-      copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-      copilot_tool_args+=(--allow-tool 'shell(git)')
-      ;;
-    locked)
-      copilot_tool_args+=(--allow-tool 'write')
-      ;;
-    *)
-      echo "Error: unknown --allow-profile: $allow_profile" >&2
-      usage
-      exit 1
-      ;;
-  esac
-else
-  # Preserve previous default behavior when not using a custom prompt.
-  if [[ -z "$prompt_file" ]]; then
-    copilot_tool_args+=(--allow-all-tools)
-    copilot_tool_args+=(--allow-tool 'write')
-    copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-    copilot_tool_args+=(--allow-tool 'shell(git)')
+    fi
   fi
 fi
 
@@ -188,7 +211,7 @@ for ((i=1; i<=iterations; i++)); do
   set +e
   result=$(
     copilot --model "$MODEL" \
-      -p "@plans/prd.json @progress.txt $PROMPT" \
+      -p "@$prd_file @progress.txt $PROMPT" \
       "${copilot_tool_args[@]}" \
       2>&1
   )

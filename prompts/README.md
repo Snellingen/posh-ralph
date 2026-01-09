@@ -7,13 +7,13 @@ This folder contains example prompt files to use with `--prompt`.
 Looped runner:
 
 ```bash
-./ralph.sh --prompt prompts/default-agent.txt --allow-profile dev 10
+./ralph.sh --prompt prompts/default.txt --allow-profile dev 10
 ```
 
 Single run:
 
 ```bash
-./ralph-once.sh --prompt prompts/default-agent.txt --allow-profile dev
+./ralph-once.sh --prompt prompts/default.txt --allow-profile dev
 ```
 
 ## Tool permissions
@@ -28,7 +28,7 @@ Examples:
 ```
 
 ```bash
-./ralph.sh --prompt prompts/default-agent.txt --allow-profile dev \
+./ralph.sh --prompt prompts/default.txt --allow-profile dev \
   --deny-tools 'shell(git push)' \
   10
 ```
