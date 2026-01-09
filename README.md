@@ -81,6 +81,8 @@ Create `plans/prd.json` with your requirements:
 | `steps`       | How to verify it works                     |
 | `passes`      | `false` → `true` when complete             |
 
+See the [`plans/`](plans/) folder for more context.
+
 ### Use Custom Prompts
 
 The default prompt is `prompts/default.txt`. Use a different one:
