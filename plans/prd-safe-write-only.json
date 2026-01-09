@@ -9,7 +9,7 @@
 			"Verify the message appears in the message list",
 			"Verify the message content matches what was typed"
 		],
-		"passes": true
+		"passes": false
 	},
 	{
 		"category": "functional",
@@ -51,7 +51,7 @@
 		"steps": [
 			"Open the same conversation in two windows (User A and User B)",
 			"On User B, focus the composer and start typing",
-			"On User A, verify a typing indicator appears (e.g., 'User B is typing\u2026')",
+			"On User A, verify a typing indicator appears (e.g., 'User B is typing')",
 			"On User B, stop typing for a few seconds",
 			"On User A, verify the typing indicator disappears"
 		],

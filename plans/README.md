@@ -1,24 +1,51 @@
 # Plans
 
-This folder holds the input that the “Ralph Wiggum” loop feeds to the coding agent.
+This folder contains the PRD (Product Requirements Document) that Ralph uses to guide the AI agent.
 
-## `prd.json`
+## Files
 
-`prd.json` is a lightweight, JSON-based PRD/TODO list: an array of small, testable work items (similar to user stories) that the agent can pick from.
+| File | Purpose |
+|------|---------|
+| `prd.json` | Default PRD — your work items |
+| `prd-<name>.json` | Optional per-prompt PRDs |
 
-Each item typically contains:
+## `prd.json` Format
 
-- `category`: e.g. `functional` or `ui`
-- `description`: one-line requirement/behavior
-- `steps`: human-readable acceptance steps
-- `passes`: boolean that flips to `true` when the work item is completed
+A JSON array of work items:
 
-### How it’s meant to be used
+```json
+[
+  {
+    "category": "functional",
+    "description": "User can send a message",
+    "steps": ["Open chat", "Type message", "Click Send", "Verify it appears"],
+    "passes": false
+  }
+]
+```
 
-- Keep items small enough to fit in one agent iteration.
-- Have the agent implement **one** item per run, keep checks/tests green, then update `passes`.
-- The loop can stop early when everything relevant is marked `passes: true`.
+| Field | Description |
+|-------|-------------|
+| `category` | `"functional"`, `"ui"`, or custom |
+| `description` | One-line requirement |
+| `steps` | How to verify it works |
+| `passes` | `false` → `true` when complete |
 
-## Example only
+## Best Practices
 
-The `prd.json` in this repo is intentionally an example/template (chat-app style stories) to demonstrate the format. Replace it with your own product’s requirements.
+- **Keep items small** — one feature per agent iteration
+- **Be specific** — clear acceptance criteria help the agent
+- **Start with `passes: false`** — the agent flips it to `true`
+- **Order by priority** — agent picks from the top
+
+## Per-Prompt PRDs
+
+Use `--prd` to specify a different PRD file:
+
+```bash
+./ralph.sh --prd plans/prd-wordpress.json --prompt prompts/wp.txt --allow-profile safe 10
+```
+
+## Example Only
+
+The included `prd.json` is a template (chat-app stories). Replace with your own requirements.
