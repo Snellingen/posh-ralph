@@ -1,459 +1,238 @@
 # Ralph (Copilot CLI runner)
 
+> Let AI implement your features while you sleep.
 
-[About](#about-ralph) | [prd.json format](#plansprdjson-format) | [Install/update Copilot CLI](#install--update-copilot-cli-standalone) | [ralph.sh (looped runner)](#ralphsh-looped-runner) | [ralph-once.sh (single run)](#ralph-oncesh-single-run) | [Demo](#demo) 
+Ralph runs **GitHub Copilot CLI** in a loop, implementing one feature at a time until your PRD is complete.
 
-> Also available for WordPress: [soderlind/ralph-wp](https://github.com/soderlind/ralph-wp)
+[Quick Start](#quick-start) · [How It Works](#how-it-works) · [Configuration](#configuration) · [Command Reference](#command-reference) · [Demo](#demo)
 
-## About Ralph
 
-Ralph is a small runner around **GitHub Copilot CLI (standalone)** inspired by [the“Ralph Wiggum” technique](https://www.humanlayer.dev/blog/brief-history-of-ralph): run a coding agent from a clean slate, over and over, until a stop condition is met.
+---
 
-The core idea:
+## Quick Start
 
-- Run the agent in a finite bash loop (e.g. 10 iterations)
-- Each iteration: implement exactly one scoped feature, then **commit**
-- Append a short progress report to `progress.txt` after each run
-- Keep CI green by running checks/tests every iteration
-- Use a PRD-style checklist (here: `plans/prd.json` with `passes: false/true`) so the agent knows what to do next and when it’s done
-- Stop early when the agent outputs `<promise>COMPLETE</promise>`
+```bash
+# Clone and enter the repo
+git clone https://github.com/soderlind/ralph
+cd ralph
 
-References:
+# Add your work items to plans/prd.json
 
-- Thread: https://x.com/mattpocockuk/status/2007924876548637089
-- Video:  [Ship working code while you sleep with the Ralph Wiggum technique | Matt Pocock](https://www.youtube.com/watch?v=_IK18goX4X8)
+# Test with a single run
+./ralph-once.sh
+
+# Run multiple iterations
+./ralph.sh 10
+```
+
+Check `progress.txt` for a log of what was done.
+
+---
+
+## How It Works
+
+Ralph implements the ["Ralph Wiggum" technique](https://www.humanlayer.dev/blog/brief-history-of-ralph):
+
+1. **Read** — Copilot reads your PRD and progress file
+2. **Pick** — It chooses the highest-priority incomplete item
+3. **Implement** — It writes code for that one feature
+4. **Verify** — It runs your tests (`pnpm typecheck`, `pnpm test`)
+5. **Update** — It marks the item complete and logs progress
+6. **Commit** — It commits the changes
+7. **Repeat** — Until all items pass or it signals completion
+
+### Learn More
+
+- [Matt Pocock's thread](https://x.com/mattpocockuk/status/2007924876548637089)
+- [Ship working code while you sleep (video)](https://www.youtube.com/watch?v=_IK18goX4X8)
 - [11 Tips For AI Coding With Ralph Wiggum](https://www.aihero.dev/tips-for-ai-coding-with-ralph-wiggum)
 
-You’ll find two helper scripts:
+---
 
-- **`ralph.sh`** — runs Copilot in a loop for _N_ iterations (stops early if Copilot prints `<promise>COMPLETE</promise>`).
-- **`ralph-once.sh`** — runs Copilot exactly once (useful for quick testing / dry-runs).
+## Configuration
 
+### Choose a Model
 
-> The default prompt lives in prompts/default.txt. Adjust it to suit your project and workflow.
+Set the `MODEL` environment variable (default: `gpt-5.2`):
 
-
-## Example output
-
-Here’s an example of what running `MODEL=claude-opus-4.5 ./ralph-once.sh` might look like:
-
-https://github.com/user-attachments/assets/221b4b44-d6ac-455c-86e9-66baa470953d
-
-
-
-## Repo layout
-
-```
-.
-├── plans/
-│   └── prd.json
-├── progress.txt
-├── ralph.sh
-└── ralph-once.sh
+```bash
+MODEL=claude-opus-4.5 ./ralph.sh 10
 ```
 
+### Define Your Work Items
 
-
-## `plans/prd.json` format
-
-See the [`plans/`](plans/) folder for more context.
-
-`plans/prd.json` is a JSON array where each entry is a “work item”, “acceptance test” or “user story”:
+Create `plans/prd.json` with your requirements:
 
 ```json
 [
   {
     "category": "functional",
-    "description": "User can send a message and see it appear in the conversation",
-    "steps": [
-      "Open the chat app and navigate to a conversation",
-      "Type a message in the composer",
-      "Click Send (or press Enter)",
-      "Verify the message appears in the message list"
-    ],
+    "description": "User can send a message and see it in the conversation",
+    "steps": ["Open chat", "Type message", "Click Send", "Verify it appears"],
     "passes": false
   }
 ]
 ```
 
-### Fields
+| Field         | Description                                |
+|---------------|--------------------------------------------|
+| `category`    | `"functional"`, `"ui"`, or custom          |
+| `description` | One-line summary                           |
+| `steps`       | How to verify it works                     |
+| `passes`      | `false` → `true` when complete             |
 
-- **`category`**: typically `"functional"` or `"ui"` (you can add more if you want).
-- **`description`**: one-line requirement / behavior.
-- **`steps`**: human-readable steps to verify.
-- **`passes`**: boolean; set to `true` when complete.
+### Use Custom Prompts
 
-Copilot is instructed to:
-- pick the **highest-priority item** (it decides),
-- implement **only one feature per run**,
-- run `pnpm typecheck` and `pnpm test`,
-- update `plans/prd.json`,
-- append notes to `progress.txt`,
-- commit changes.
-
-
-
-## Install / update Copilot CLI (standalone)
-
-### Check your installed version
-```bash
-copilot --version
-# or
-copilot -v
-```
-
-### Update (choose the one that matches how you installed it)
-
-**Homebrew (macOS/Linux)**
-```bash
-brew update
-brew upgrade copilot
-```
-
-**npm**
-```bash
-npm i -g @github/copilot
-```
-
-**WinGet (Windows)**
-```powershell
-winget upgrade GitHub.Copilot
-```
-
-> Tip: If you’re not sure how you installed it, run `which copilot` (macOS/Linux) or `where copilot` (Windows) to see where it’s coming from.
-
-
-
-## List available models
-
- Force an error to print allowed models (quick check)
-
-```bash
-copilot --model not-a-real-model -p "hi"
-```
-
-You can also list/select models in interactive mode:
-
-```bash
-copilot
-```
-
-Then inside the Copilot prompt:
-
-```text
-/model
-```
-
-
-
-## Set the model (and default)
-
-### One command
-```bash
-copilot --model gpt-5.2 -p "Hello"
-```
-
-### In the scripts (recommended pattern)
-
-All scripts read a `MODEL` environment variable and default to `gpt-5.2` if not set:
-
-```bash
-MODEL="${MODEL:-gpt-5.2}"
-```
-
-Run with a specific model like this:
-
-```bash
-MODEL=claude-opus-4.5 ./ralph-once.sh
-```
-
-
-
-## `ralph.sh` (looped runner)
-
-### What it does
-- Runs Copilot up to **N iterations**
-- Captures Copilot output each time
-- Stops early if output contains:
-  - `<promise>COMPLETE</promise>`
-
-### Usage
-```bash
-./ralph.sh 10
-```
-
-### No parameters / minimal invocation
-
-`ralph.sh` requires exactly one positional argument: the number of iterations.
-
-- Minimal run (default prompt + default PRD + default tool policy):
-  ```bash
-  ./ralph.sh 10
-  ```
-- Show help:
-  ```bash
-  ./ralph.sh --help
-  ```
-
-### Parameters
-
-`ralph.sh` accepts these options (all optional) plus the required `<iterations>` positional arg:
-
-- `--prompt <file>`: Load prompt text from a file. If omitted, uses `prompts/default.txt`.
-- `--prd <file>` / `--prd=<file>`: Use a specific PRD JSON file. Default: `plans/prd.json`.
-- `--allow-profile <safe|dev|locked>`: Select a tool permission profile.
-- `--allow-tools <toolSpec>` (repeatable): Add an allowed tool.
-  - If you provide any `--allow-tools`, they become the *full* allowlist (they replace the profile/default allowed tools).
-- `--deny-tools <toolSpec>` (repeatable): Deny a tool.
-- `MODEL=<model>` (env var): Select the model (default: `gpt-5.2`). Example: `MODEL=claude-opus-4.5 ./ralph.sh 10`.
-
-Notes:
-- When you use `--prompt`, you must also pass `--allow-profile` or at least one `--allow-tools`.
-- The script always denies dangerous commands like `shell(rm)` and `shell(git push)`.
-
-### Usage with a custom prompt
-
-When using `--prompt`, you must also specify either `--allow-profile` or one or more `--allow-tools`.
-
-If you provide any `--allow-tools`, they become the full allowlist (they replace the profile/default allowed tools).
+The default prompt is `prompts/default.txt`. Use a different one:
 
 ```bash
 ./ralph.sh --prompt prompts/my-prompt.txt --allow-profile safe 10
 ```
 
-Use a prompt-specific PRD file:
+> **Note:** Custom prompts require `--allow-profile` or `--allow-tools`.
+
+---
+
+## Command Reference
+
+### `ralph.sh` — Looped Runner
+
+Runs Copilot up to N iterations. Stops early on `<promise>COMPLETE</promise>`.
 
 ```bash
-./ralph.sh --prompt prompts/my-prompt.txt --prd plans/prd-wordpress-plugin-agent.json --allow-profile safe 10
+./ralph.sh [options] <iterations>
 ```
 
-Example: WordPress-oriented prompt (from `ralph-wp`), with explicit shell tools:
+**Examples:**
 
 ```bash
-./ralph.sh --prompt prompts/wordpress-plugin-agent.txt --allow-profile safe \
-  --allow-tools write \
-  --allow-tools 'shell(git)' \
-  --allow-tools 'shell(npx)' \
-  --allow-tools 'shell(composer)' \
-  --allow-tools 'shell(npm)' \
-  10
+./ralph.sh 10                                    # Basic run
+./ralph.sh --prompt prompts/wp.txt --allow-profile safe 10  # Custom prompt
+MODEL=claude-opus-4.5 ./ralph.sh 10              # Different model
 ```
 
-Add extra allowed tools (repeatable):
+### `ralph-once.sh` — Single Run
+
+Runs Copilot once. Great for testing.
 
 ```bash
-./ralph.sh --prompt prompts/my-prompt.txt --allow-profile safe \
-  --allow-tools write \
-  --allow-tools 'shell(git push)' \
-  10
+./ralph-once.sh [options]
 ```
 
-Add extra denied tools (repeatable):
+**Examples:**
 
 ```bash
-./ralph.sh --prompt prompts/my-prompt.txt --allow-profile dev \
-  --deny-tools 'shell(git commit)' \
-  10
+./ralph-once.sh                                  # Basic run
+./ralph-once.sh --prompt prompts/wp.txt --allow-profile locked
+MODEL=claude-opus-4.5 ./ralph-once.sh
 ```
 
-### How it prompts Copilot
-Copilot CLI versions observed during development can behave poorly when the prompt contains multiple `@file` attachments.
+### Options
 
-To avoid that, `ralph.sh` builds a *single temporary context file* per iteration that contains:
-- the PRD JSON (defaults to `plans/prd.json`)
-- `progress.txt`
+| Option                   | Description                          | Default               |
+|--------------------------|--------------------------------------|-----------------------|
+| `--prompt <file>`        | Load prompt from file                | `prompts/default.txt` |
+| `--prd <file>`           | Use specific PRD JSON                | `plans/prd.json`      |
+| `--allow-profile <name>` | Permission profile (see below)       | —                     |
+| `--allow-tools <spec>`   | Allow specific tool (repeatable)     | —                     |
+| `--deny-tools <spec>`    | Deny specific tool (repeatable)      | —                     |
+| `-h, --help`             | Show help                            | —                     |
 
-Then it runs Copilot with:
-- `--add-dir "$PWD"` (so `@<file>` attachments are allowed)
-- a prompt that starts with `@<temp context file>` followed by the prompt text
+**Environment:**
 
-The prompt instructs Copilot to implement **one** feature, run checks, update files, and commit.
+| Variable | Description        | Default   |
+|----------|--------------------|-----------|
+| `MODEL`  | Model to use       | `gpt-5.2` |
 
+### Permission Profiles
 
+| Profile  | Allows                                 | Use Case                     |
+|----------|----------------------------------------|------------------------------|
+| `locked` | `write` only                           | File edits, no shell         |
+| `safe`   | `write`, `shell(pnpm)`, `shell(git)`   | Normal dev workflow          |
+| `dev`    | All tools                              | Broad shell access           |
 
-## `ralph-once.sh` (single run)
+**Always denied:** `shell(rm)`, `shell(git push)`
 
-### What it does
-- Runs Copilot exactly once with the same instructions as the loop script.
-
-### Usage
-```bash
-./ralph-once.sh
-```
-
-### No parameters / minimal invocation
-
-With no parameters, `ralph-once.sh` uses:
-- prompt: `prompts/default.txt`
-- PRD: `plans/prd.json`
-- progress file: `progress.txt`
-- model: `gpt-5.2` (override via `MODEL=<model>`)
-
-Show help:
+**Custom tools:** If you pass `--allow-tools`, it replaces the profile defaults:
 
 ```bash
-./ralph-once.sh --help
+./ralph.sh --prompt prompts/wp.txt --allow-tools write --allow-tools 'shell(composer)' 10
 ```
 
-### Parameters
+---
 
-`ralph-once.sh` accepts these options (all optional):
+## Demo
 
-- `--prompt <file>`: Load prompt text from a file. If omitted, uses `prompts/default.txt`.
-- `--prd <file>`: Use a specific PRD JSON file. Default: `plans/prd.json`.
-- `--allow-profile <safe|dev|locked>`: Select a tool permission profile.
-- `--allow-tools <toolSpec>` (repeatable): Add an allowed tool.
-  - If you provide any `--allow-tools`, they become the *full* allowlist (they replace the profile/default allowed tools).
-- `--deny-tools <toolSpec>` (repeatable): Deny a tool.
-- `MODEL=<model>` (env var): Select the model (default: `gpt-5.2`). Example: `MODEL=claude-opus-4.5 ./ralph-once.sh`.
-
-Notes:
-- When you use `--prompt`, you must also pass `--allow-profile` or at least one `--allow-tools`.
-- The script always denies dangerous commands like `shell(rm)` and `shell(git push)`.
-
-### Usage with a custom prompt
+Try Ralph in a safe sandbox:
 
 ```bash
-./ralph-once.sh --prompt prompts/my-prompt.txt --allow-profile locked
+# Setup
+git clone https://github.com/soderlind/ralph && cd ralph
+git worktree add ../ralph-demo -b ralph-demo
+cd ../ralph-demo
+
+# Run
+./ralph-once.sh          # Test once
+./ralph.sh 10            # Run 10 iterations
+
+# Inspect
+git log --oneline -20
+cat progress.txt
+
+# Cleanup
+cd .. && git worktree remove ralph-demo && git branch -D ralph-demo
 ```
 
-Or specify an explicit allowlist (repeatable):
+---
+
+## Project Structure
+
+```
+.
+├── plans/prd.json        # Your work items
+├── prompts/default.txt   # Default prompt
+├── progress.txt          # Running log
+├── ralph.sh              # Looped runner
+├── ralph-once.sh         # Single-run script
+└── test/run-prompts.sh   # Test harness
+```
+
+---
+
+## Install Copilot CLI
 
 ```bash
-./ralph-once.sh --prompt prompts/my-prompt.txt \
-  --allow-tools write \
-  --allow-tools 'shell(pnpm)'
+# Check version
+copilot --version
+
+# Homebrew
+brew update && brew upgrade copilot
+
+# npm
+npm i -g @github/copilot
+
+# Windows
+winget upgrade GitHub.Copilot
 ```
 
-You can also add extra denied tools (repeatable):
+---
 
-```bash
-./ralph-once.sh --prompt prompts/my-prompt.txt --allow-profile dev \
-  --deny-tools 'shell(git commit)'
-```
+## Testing Prompts
 
-
-
-## Notes on permissions / safety
-
-Copilot CLI supports tool permission flags like:
-
-- `--allow-tool 'write'` (file edits)
-- `--allow-tool 'shell(git)'` / `--deny-tool 'shell(git push)'`
-- `--allow-all-tools` (broad auto-approval; use with care)
-
-### `--allow-profile` meanings
-
-The scripts support three built-in tool permission profiles:
-
-- `locked`: write-only.
-  - Allows: `write`
-  - Use this when you want Copilot to only edit files (no shell).
-
-- `safe`: “common dev loop” tools.
-  - Allows: `write`, `shell(pnpm)`, `shell(git)`
-  - Use this for most repos where you want installs/tests (`pnpm`) and normal git operations.
-
-- `dev`: broadest permissions.
-  - Enables: `--allow-all-tools`
-  - Still explicitly allows the common tools above.
-  - Use this only when you expect the agent to need lots of shell commands.
-
-Regardless of profile, the scripts always deny a small set of dangerous tools (e.g. `shell(rm)` and `shell(git push)`).
-
-If you provide any `--allow-tools`, they become the full allowlist (they replace profile/default allowed tools).
-
-The scripts in this bundle:
-- explicitly deny dangerous commands like `rm` and `git push`
-- aim to run non-interactively by passing Copilot CLI tool permissions up-front
-  - `ralph.sh` uses `--allow-all-tools` and may additionally pass `--available-tools ...` to restrict what’s actually usable
-
-When using a custom prompt via `--prompt`, the scripts default to a conservative policy:
-- they require either `--allow-profile` or at least one `--allow-tools`
-- they never infer tool permissions from prompt file contents
-
-Adjust these to match your comfort level and CI/CD setup.
-
-
-
-## Typical workflow
-
-1. Put work items in `plans/prd.json`
-2. Run one iteration to validate your setup:
-   ```bash
-   ./ralph-once.sh
-   ```
-3. Run multiple iterations:
-   ```bash
-   ./ralph.sh 20
-   ```
-4. Review `progress.txt` for a running log of changes and next steps.
-
-## Testing prompts
-
-This repo includes a small harness that runs each prompt in `prompts/` in its own git worktree and logs output to `test/log/`.
+Run all prompts in isolated worktrees:
 
 ```bash
 ./test/run-prompts.sh
 ```
 
-## Demo
+Logs: `test/log/`
 
-Run Ralph in an isolated sandbox using a `git worktree` so you can delete everything afterwards.
-
-1. Clone this repo and `cd` into it:
-  ```bash
-  git clone https://github.com/soderlind/ralph
-  cd ralph
-  ```
-
-2. From the repo root, create a worktree on a new branch:
-  ```bash
-  ROOT_DIR="$PWD"
-  git worktree add "$ROOT_DIR/../ralph-demo" -b ralph-demo
-  cd "$ROOT_DIR/../ralph-demo"
-  ```
-
-3. (Optional) Confirm Copilot CLI is available:
-  ```bash
-  copilot --version
-  ```
-
-4. Run one iteration to validate everything works end-to-end:
-  ```bash
-  ./ralph-once.sh
-  ```
-
-5. Run multiple iterations (adjust the number as needed):
-  ```bash
-  ./ralph.sh 10
-  ```
-
-6. Inspect what happened:
-  ```bash
-  git --no-pager log --oneline --decorate -n 20
-  cat progress.txt
-  ```
-
-7. Clean up (removes the worktree folder and deletes the demo branch):
-  ```bash
-  # IMPORTANT: run worktree commands against the same repo you created the worktree from.
-  # Using `git -C "$ROOT_DIR" ...` avoids relying on `cd -` (which can change across shells).
-
-  cd "$ROOT_DIR"
-  git -C "$ROOT_DIR" worktree list
-  git -C "$ROOT_DIR" worktree remove "$ROOT_DIR/../ralph-demo" || true
-
-  # If you deleted the folder manually, prune stale worktree metadata then re-check:
-  # git -C "$ROOT_DIR" worktree prune
-  # git -C "$ROOT_DIR" worktree list
-
-  git -C "$ROOT_DIR" branch -D ralph-demo
-  ```
+---
 
 ## Credits
 
-- Prompt in scripts: [Matt Pocock](https://github.com/mattpocock)
+Prompt technique: [Matt Pocock](https://github.com/mattpocock)
 
 ## License
 
