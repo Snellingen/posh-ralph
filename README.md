@@ -41,6 +41,10 @@ Ralph implements the ["Ralph Wiggum" technique](https://www.humanlayer.dev/blog/
 6. **Commit** — It commits the changes
 7. **Repeat** — Until all items pass or it signals completion
 
+
+https://github.com/user-attachments/assets/28206ee1-8dad-4871-aef5-1a9f24625dba
+
+
 ### Learn More
 
 - [Matt Pocock's thread](https://x.com/mattpocockuk/status/2007924876548637089)
