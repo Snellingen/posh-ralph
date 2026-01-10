@@ -16,6 +16,24 @@ Single run:
 ./ralph-once.sh --prompt prompts/default.txt --allow-profile dev
 ```
 
+## Examples (per prompt)
+
+```bash
+./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
+```
+
+```bash
+./ralph.sh --prompt prompts/safe-write-only.txt --allow-profile locked 10
+```
+
+```bash
+./ralph.sh --prompt prompts/wordpress-plugin-agent.txt --prd plans/prd.json --allow-profile safe 10
+```
+
+```bash
+./ralph.sh --prompt prompts/pest-coverage.txt --allow-profile safe 10
+```
+
 ## Tool permissions
 
 Tool permissions are controlled by the scripts via flags (not by prompt file content).

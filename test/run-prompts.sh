@@ -88,6 +88,7 @@ run_one_prompt() {
   local prompt_name
   local prd_file
   local prd_src
+  local needs_prd
   local wt_dir
   local branch
   local log_file
@@ -96,6 +97,7 @@ run_one_prompt() {
   prompt_name="${prompt_file%.txt}"
   prd_file="plans/prd-${prompt_name}.json"
   prd_src="$ROOT/$prd_file"
+  needs_prd=1
 
   wt_dir="$ROOT/test/worktrees/${TS}-${prompt_name}"
   branch="ralph-test/${TS}-${prompt_name}"
@@ -103,15 +105,26 @@ run_one_prompt() {
 
   mkdir -p "$(dirname "$wt_dir")"
 
-  # Prefer per-prompt PRDs, but fall back to the default PRD when none exists.
-  if [[ ! -r "$prd_src" ]]; then
-    prd_file="plans/prd.json"
-    prd_src="$ROOT/$prd_file"
+  # Some prompts intentionally do not use a PRD.
+  case "$prompt_file" in
+    pest-coverage.txt)
+      needs_prd=0
+      prd_file=""
+      prd_src=""
+      ;;
+  esac
+
+  if [[ $needs_prd -eq 1 ]]; then
+    # Prefer per-prompt PRDs, but fall back to the default PRD when none exists.
     if [[ ! -r "$prd_src" ]]; then
-      echo "Error: default PRD file not readable: $prd_file" | tee -a "$log_file" >&2
-      echo "Hint: create it at: $prd_src" | tee -a "$log_file" >&2
-      echo -e "${prompt_file}\tSKIP(missing-prd)\t-" >>"$RUN_LOG_DIR/summary.tsv"
-      return 0
+      prd_file="plans/prd.json"
+      prd_src="$ROOT/$prd_file"
+      if [[ ! -r "$prd_src" ]]; then
+        echo "Error: default PRD file not readable: $prd_file" | tee -a "$log_file" >&2
+        echo "Hint: create it at: $prd_src" | tee -a "$log_file" >&2
+        echo -e "${prompt_file}\tSKIP(missing-prd)\t-" >>"$RUN_LOG_DIR/summary.tsv"
+        return 0
+      fi
     fi
   fi
 
@@ -137,10 +150,12 @@ run_one_prompt() {
   # Prompt-specific tool policy (kept in the runner, not in prompt files).
   # Feel free to tweak these mappings as you add more prompts.
   declare -a args
-  mkdir -p "$(dirname "$prd_file")"
-  cp "$prd_src" "$prd_file"
-
-  args=("--prompt" "prompts/$prompt_file" "--prd" "$prd_file")
+  args=("--prompt" "prompts/$prompt_file")
+  if [[ $needs_prd -eq 1 ]]; then
+    mkdir -p "$(dirname "$prd_file")"
+    cp "$prd_src" "$prd_file"
+    args+=("--prd" "$prd_file")
+  fi
 
   # Build Copilot CLI tool flags (kept in the harness, not in prompt files).
   declare -a copilot_tool_args
@@ -154,10 +169,10 @@ run_one_prompt() {
     wordpress-plugin-agent.txt)
       # Explicit allowlist for WP prompt.
       copilot_tool_args+=(--allow-tool 'write')
-      copilot_tool_args+=(--allow-tool 'shell(git)')
-      copilot_tool_args+=(--allow-tool 'shell(npx)')
-      copilot_tool_args+=(--allow-tool 'shell(composer)')
-      copilot_tool_args+=(--allow-tool 'shell(npm)')
+      copilot_tool_args+=(--allow-tool 'shell(git:*)')
+      copilot_tool_args+=(--allow-tool 'shell(npx:*)')
+      copilot_tool_args+=(--allow-tool 'shell(composer:*)')
+      copilot_tool_args+=(--allow-tool 'shell(npm:*)')
       ;;
     safe-write-only.txt)
       # Locked: write-only.
@@ -166,8 +181,8 @@ run_one_prompt() {
     *)
       # Default: safe profile (write + pnpm + git).
       copilot_tool_args+=(--allow-tool 'write')
-      copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-      copilot_tool_args+=(--allow-tool 'shell(git)')
+      copilot_tool_args+=(--allow-tool 'shell(pnpm:*)')
+      copilot_tool_args+=(--allow-tool 'shell(git:*)')
       ;;
   esac
 
@@ -187,9 +202,11 @@ run_one_prompt() {
   {
     echo "# Context"
     echo
-    echo "## PRD ($prd_file)"
-    cat "$prd_file"
-    echo
+    if [[ $needs_prd -eq 1 ]]; then
+      echo "## PRD ($prd_file)"
+      cat "$prd_file"
+      echo
+    fi
     echo "## progress.txt"
     cat "progress.txt"
     echo

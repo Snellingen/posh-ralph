@@ -19,10 +19,10 @@ cd ralph
 # Add your work items to plans/prd.json
 
 # Test with a single run
-./ralph-once.sh
+./ralph-once.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe
 
 # Run multiple iterations
-./ralph.sh 10
+./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
 ```
 
 Check `progress.txt` for a log of what was done.
@@ -33,7 +33,7 @@ Check `progress.txt` for a log of what was done.
 
 Ralph implements the ["Ralph Wiggum" technique](https://www.humanlayer.dev/blog/brief-history-of-ralph):
 
-1. **Read** — Copilot reads your PRD and progress file
+1. **Read** — Copilot reads your PRD (if attached) and progress file
 2. **Pick** — It chooses the highest-priority incomplete item
 3. **Implement** — It writes code for that one feature
 4. **Verify** — It runs your tests (`pnpm typecheck`, `pnpm test`)
@@ -60,7 +60,7 @@ https://github.com/user-attachments/assets/28206ee1-8dad-4871-aef5-1a9f24625dba
 Set the `MODEL` environment variable (default: `gpt-5.2`):
 
 ```bash
-MODEL=claude-opus-4.5 ./ralph.sh 10
+MODEL=claude-opus-4.5 ./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
 ```
 
 ### Define Your Work Items
@@ -89,7 +89,7 @@ See the [`plans/`](plans/) folder for more context.
 
 ### Use Custom Prompts
 
-The default prompt is `prompts/default.txt`. Use a different one:
+Prompts are required. Use any prompt file:
 
 ```bash
 ./ralph.sh --prompt prompts/my-prompt.txt --allow-profile safe 10
@@ -112,9 +112,9 @@ Runs Copilot up to N iterations. Stops early on `<promise>COMPLETE</promise>`.
 **Examples:**
 
 ```bash
-./ralph.sh 10                                    # Basic run
-./ralph.sh --prompt prompts/wp.txt --allow-profile safe 10  # Custom prompt
-MODEL=claude-opus-4.5 ./ralph.sh 10              # Different model
+./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
+./ralph.sh --prompt prompts/wp.txt --allow-profile safe 10
+MODEL=claude-opus-4.5 ./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
 ```
 
 ### `ralph-once.sh` — Single Run
@@ -128,17 +128,17 @@ Runs Copilot once. Great for testing.
 **Examples:**
 
 ```bash
-./ralph-once.sh                                  # Basic run
+./ralph-once.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe
 ./ralph-once.sh --prompt prompts/wp.txt --allow-profile locked
-MODEL=claude-opus-4.5 ./ralph-once.sh
+MODEL=claude-opus-4.5 ./ralph-once.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe
 ```
 
 ### Options
 
 | Option                   | Description                          | Default               |
 |--------------------------|--------------------------------------|-----------------------|
-| `--prompt <file>`        | Load prompt from file                | `prompts/default.txt` |
-| `--prd <file>`           | Use specific PRD JSON                | `plans/prd.json`      |
+| `--prompt <file>`        | Load prompt from file (required)     | —                     |
+| `--prd <file>`           | Optionally attach a PRD JSON file    | —                     |
 | `--allow-profile <name>` | Permission profile (see below)       | —                     |
 | `--allow-tools <spec>`   | Allow specific tool (repeatable)     | —                     |
 | `--deny-tools <spec>`    | Deny specific tool (repeatable)      | —                     |
@@ -155,7 +155,7 @@ MODEL=claude-opus-4.5 ./ralph-once.sh
 | Profile  | Allows                                 | Use Case                     |
 |----------|----------------------------------------|------------------------------|
 | `locked` | `write` only                           | File edits, no shell         |
-| `safe`   | `write`, `shell(pnpm)`, `shell(git)`   | Normal dev workflow          |
+| `safe`   | `write`, `shell(pnpm:*)`, `shell(git:*)` | Normal dev workflow        |
 | `dev`    | All tools                              | Broad shell access           |
 
 **Always denied:** `shell(rm)`, `shell(git push)`
@@ -163,7 +163,7 @@ MODEL=claude-opus-4.5 ./ralph-once.sh
 **Custom tools:** If you pass `--allow-tools`, it replaces the profile defaults:
 
 ```bash
-./ralph.sh --prompt prompts/wp.txt --allow-tools write --allow-tools 'shell(composer)' 10
+./ralph.sh --prompt prompts/wp.txt --allow-tools write --allow-tools 'shell(composer:*)' 10
 ```
 
 ---
@@ -179,8 +179,8 @@ git worktree add ../ralph-demo -b ralph-demo
 cd ../ralph-demo
 
 # Run
-./ralph-once.sh          # Test once
-./ralph.sh 10            # Run 10 iterations
+./ralph-once.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe
+./ralph.sh --prompt prompts/default.txt --prd plans/prd.json --allow-profile safe 10
 
 # Inspect
 git log --oneline -20
@@ -197,7 +197,7 @@ cd .. && git worktree remove ralph-demo && git branch -D ralph-demo
 ```
 .
 ├── plans/prd.json        # Your work items
-├── prompts/default.txt   # Default prompt
+├── prompts/default.txt   # Example prompt
 ├── progress.txt          # Running log
 ├── ralph.sh              # Looped runner
 ├── ralph-once.sh         # Single-run script

@@ -2,16 +2,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULT_PROMPT_FILE="$SCRIPT_DIR/prompts/default.txt"
 
 usage() {
   cat <<USAGE
 Usage:
-  $0 [--prompt <file>] [--prd <file>] [--allow-profile <safe|dev|locked>] [--allow-tools <toolSpec> ...] [--deny-tools <toolSpec> ...] <iterations>
+  $0 --prompt <file> [--prd <file>] [--allow-profile <safe|dev|locked>] [--allow-tools <toolSpec> ...] [--deny-tools <toolSpec> ...] <iterations>
 
 Options:
-  --prompt <file>           Load prompt text from file (otherwise use prompts/default.txt).
-  --prd <file>              Use a specific PRD JSON file (default: plans/prd.json).
+  --prompt <file>           Load prompt text from file (required).
+  --prd <file>              Optionally attach a PRD JSON file.
   --allow-profile <name>    Tool permission profile: safe | dev | locked.
   --allow-tools <toolSpec>  Allow a specific tool (repeatable). Example: --allow-tools write
                             Use quotes if the spec includes spaces: --allow-tools 'shell(git push)'
@@ -19,12 +18,12 @@ Options:
   -h, --help                Show this help.
 
 Notes:
-  - If you use --prompt, you must also pass --allow-profile or at least one --allow-tools.
+  - You must pass --allow-profile or at least one --allow-tools.
 USAGE
 }
 
 prompt_file=""
-prd_file="plans/prd.json"
+prd_file=""
 allow_profile=""
 declare -a allow_tools
 declare -a deny_tools
@@ -128,23 +127,18 @@ iterations="$1"
 # Default model if not provided
 MODEL="${MODEL:-gpt-5.2}"
 
-PROMPT=""
-if [[ -n "$prompt_file" ]]; then
-  if [[ ! -r "$prompt_file" ]]; then
-    echo "Error: prompt file not readable: $prompt_file" >&2
-    exit 1
-  fi
-  PROMPT="$(cat "$prompt_file")"
-else
-  if [[ ! -r "$DEFAULT_PROMPT_FILE" ]]; then
-    echo "Error: default prompt file not readable: $DEFAULT_PROMPT_FILE" >&2
-    echo "Hint: create it or pass --prompt <file>" >&2
-    exit 1
-  fi
-  PROMPT="$(cat "$DEFAULT_PROMPT_FILE")"
+if [[ -z "$prompt_file" ]]; then
+  echo "Error: --prompt is required" >&2
+  usage
+  exit 1
 fi
 
-if [[ ! -r "$prd_file" ]]; then
+if [[ ! -r "$prompt_file" ]]; then
+  echo "Error: prompt file not readable: $prompt_file" >&2
+  exit 1
+fi
+
+if [[ -n "$prd_file" ]] && [[ ! -r "$prd_file" ]]; then
   echo "Error: PRD file not readable: $prd_file" >&2
   exit 1
 fi
@@ -155,15 +149,13 @@ if [[ ! -r "$progress_file" ]]; then
   exit 1
 fi
 
-if [[ -n "$prompt_file" ]] && [[ -z "$allow_profile" ]] && [[ ${#allow_tools[@]} -eq 0 ]]; then
-  echo "Error: when using --prompt, you must specify --allow-profile or at least one --allow-tools" >&2
+if [[ -z "$allow_profile" ]] && [[ ${#allow_tools[@]} -eq 0 ]]; then
+  echo "Error: you must specify --allow-profile or at least one --allow-tools" >&2
   usage
   exit 1
 fi
 
 declare -a copilot_tool_args
-declare -a available_tools
-available_tools=()
 
 # Always deny a small set of dangerous commands.
 copilot_tool_args+=(--deny-tool 'shell(rm)')
@@ -175,18 +167,16 @@ if [[ ${#allow_tools[@]} -eq 0 ]]; then
       dev)
         copilot_tool_args+=(--allow-all-tools)
         copilot_tool_args+=(--allow-tool 'write')
-        copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-        copilot_tool_args+=(--allow-tool 'shell(git)')
+        copilot_tool_args+=(--allow-tool 'shell(pnpm:*)')
+        copilot_tool_args+=(--allow-tool 'shell(git:*)')
         ;;
       safe)
         copilot_tool_args+=(--allow-tool 'write')
-        copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-        copilot_tool_args+=(--allow-tool 'shell(git)')
-        available_tools+=('write' 'shell(pnpm)' 'shell(git)')
+        copilot_tool_args+=(--allow-tool 'shell(pnpm:*)')
+        copilot_tool_args+=(--allow-tool 'shell(git:*)')
         ;;
       locked)
         copilot_tool_args+=(--allow-tool 'write')
-        available_tools+=('write')
         ;;
       *)
         echo "Error: unknown --allow-profile: $allow_profile" >&2
@@ -194,34 +184,18 @@ if [[ ${#allow_tools[@]} -eq 0 ]]; then
         exit 1
         ;;
     esac
-  else
-    # Preserve previous default behavior when not using a custom prompt.
-    if [[ -z "$prompt_file" ]]; then
-      copilot_tool_args+=(--allow-all-tools)
-      copilot_tool_args+=(--allow-tool 'write')
-      copilot_tool_args+=(--allow-tool 'shell(pnpm)')
-      copilot_tool_args+=(--allow-tool 'shell(git)')
-      available_tools+=('write' 'shell(pnpm)' 'shell(git)')
-    fi
   fi
 fi
 
-for tool in "${allow_tools[@]:-}"; do
+for tool in "${allow_tools[@]}"; do
   copilot_tool_args+=(--allow-tool "$tool")
-  available_tools+=("$tool")
 done
 
-for tool in "${deny_tools[@]:-}"; do
+for tool in "${deny_tools[@]}"; do
   copilot_tool_args+=(--deny-tool "$tool")
 done
 
-# Copilot CLI requires --allow-all-tools for non-interactive tool execution.
-# When we have a specific allowlist (safe/locked or explicit --allow-tools),
-# also restrict the tool set via --available-tools to avoid unintended tools.
-copilot_tool_args+=(--allow-all-tools)
-if [[ "${allow_profile:-}" != "dev" ]] && [[ ${#available_tools[@]} -gt 0 ]]; then
-  copilot_tool_args+=(--available-tools "${available_tools[@]}")
-fi
+
 
 for ((i=1; i<=iterations; i++)); do
   echo -e "\nIteration $i"
@@ -233,9 +207,11 @@ for ((i=1; i<=iterations; i++)); do
   {
     echo "# Context"
     echo
-    echo "## PRD ($prd_file)"
-    cat "$prd_file"
-    echo
+    if [[ -n "$prd_file" ]]; then
+      echo "## PRD ($prd_file)"
+      cat "$prd_file"
+      echo
+    fi
     echo "## progress.txt"
     cat "$progress_file"
     echo
@@ -243,11 +219,23 @@ for ((i=1; i<=iterations; i++)); do
 
   # Copilot may return non-zero (auth/rate limit/etc). Don't let that kill the loop.
   set +e
+  combined_prompt_file="$(mktemp ".ralph-prompt.${i}.XXXXXX")"
+  {
+    cat "$context_file"
+    echo
+    echo "# Prompt"
+    echo
+    # Keep the prompt content as-is (including newlines).
+    cat "$prompt_file"
+    echo
+  } >"$combined_prompt_file"
+
   if command -v script >/dev/null 2>&1; then
     transcript_file="$(mktemp -t ralph-copilot.XXXXXX)"
     script -q -F "$transcript_file" \
       copilot --add-dir "$PWD" --model "$MODEL" \
-        -p "@$context_file $PROMPT" \
+        --no-color --stream off --silent \
+        -p "@$combined_prompt_file Follow the attached prompt." \
         "${copilot_tool_args[@]}" \
       >/dev/null 2>&1
     status=$?
@@ -256,7 +244,8 @@ for ((i=1; i<=iterations; i++)); do
   else
     result=$(
       copilot --add-dir "$PWD" --model "$MODEL" \
-        -p "@$context_file $PROMPT" \
+        --no-color --stream off --silent \
+        -p "@$combined_prompt_file Follow the attached prompt." \
         "${copilot_tool_args[@]}" \
         2>&1
     )
@@ -265,6 +254,7 @@ for ((i=1; i<=iterations; i++)); do
   set -e
 
   rm -f "$context_file" >/dev/null 2>&1 || true
+  rm -f "$combined_prompt_file" >/dev/null 2>&1 || true
 
   echo "$result"
 
