@@ -237,6 +237,41 @@ Logs: `test/log/`
 
 ---
 
+## Copilot CLI Notes
+
+Ralph is just a thin wrapper around the Copilot CLI. The important flags it relies on are:
+
+### `--context-file`
+
+`--context-file <path>` tells Copilot CLI to read additional context from a file and include it in the model input.
+
+Ralph uses this to build one temporary “attachment” file per iteration that typically contains:
+
+- `progress.txt` (always)
+- PRD JSON (only if you pass `--prd <file>`)
+- The selected prompt file (from `--prompt <file>`)
+
+This keeps the agent’s input structured and avoids inlining large blobs into command-line flags.
+
+### Tool permissions (`--allow-*` / `--deny-*`)
+
+Ralph controls what Copilot is allowed to do by passing tool permission flags:
+
+- `--allow-profile <safe|dev|locked>`: convenience presets implemented by Ralph.
+- `--allow-tools <spec>`: allow a specific tool spec (repeatable). When you use this, it replaces the profile defaults.
+- `--deny-tools <spec>`: deny a specific tool spec (repeatable).
+
+For shell tools, prefer the pattern form `shell(cmd:*)` (for example `shell(git:*)`).
+
+Ralph always denies a small set of dangerous commands (currently `shell(rm)` and `shell(git push)`).
+
+### Reliability niceties
+
+- Single attachment workaround: Ralph combines PRD + `progress.txt` into one context file to avoid Copilot CLI issues with multiple `@file` attachments.
+- Pseudo-TTY capture in the harness: `test/run-prompts.sh` uses `script(1)` to capture output even when Copilot writes directly to the TTY.
+
+---
+
 
 ## License
 
