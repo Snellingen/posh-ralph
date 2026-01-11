@@ -274,7 +274,7 @@ Ralph always denies a small set of dangerous commands (currently `shell(rm)` and
 
 ### Skills (`--skill`)
 
-Skills let you prepend reusable instructions into the same attached context file.
+[Skills](https://agentskills.io/home) let you prepend reusable instructions into the same attached context file.
 Pass a comma-separated list (repeatable):
 
 - `--skill wp-block-development` loads `skills/wp-block-development/SKILL.md`
