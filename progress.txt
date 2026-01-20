@@ -4,3 +4,9 @@
   - Added `package.json` + `tsconfig.json` with `pnpm typecheck` and `pnpm test` scripts.
   - Note: this environment denied running `pnpm`/`node` and `git add/commit` (permission prompt couldn’t be shown), so checks + commit must be done manually.
   - Next: implement persistence after refresh/reopen (likely via a storage abstraction) and then real-time delivery.
+
+- 2026-01-20: Completed message persistence feature (PRD item 2).
+  - Fixed TypeScript errors by adding "DOM" to tsconfig.json lib array for localStorage types.
+  - Storage adapter pattern already in place with LocalStorageAdapter and tests validating persistence.
+  - All tests pass and types check successfully.
+  - Next: Consider real-time message delivery (WebSocket/polling) or unread counts.
