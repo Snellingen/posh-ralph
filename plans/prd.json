@@ -20,7 +20,7 @@
 			"Navigate back to the same conversation",
 			"Verify the previously sent message is still visible"
 		],
-		"passes": false
+		"passes": true
 	},
 	{
 		"category": "functional",
@@ -31,7 +31,7 @@
 			"On User A, verify the new message appears automatically",
 			"Verify ordering places the new message at the end of the conversation"
 		],
-		"passes": false
+		"passes": true
 	},
 	{
 		"category": "functional",
