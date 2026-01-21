@@ -36,7 +36,8 @@ Invoke-RalphCopilot -PromptFile "prompts/default.txt" -PrdFile "plans/prd.json" 
 ```
 Optional:
 - Add `-Skills wp-project-triage` (or any folder under skills/ with SKILL.md).
-- Set `$env:MODEL` to override the default model.
+- Use `-Model <model>` to specify a model (has auto-complete support, e.g., `-Model claude-haiku-4.5`).
+- Alternatively, set `$env:MODEL` to override the default model.
 
 ## Requirements
 - PowerShell 7+
