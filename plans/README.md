@@ -44,7 +44,7 @@ A JSON array of work items:
 Use `-PrdFile` to specify a different PRD file:
 
 ```powershell
-pwsh -File ./ralph.ps1 -PrdFile plans/prd-wordpress.json -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PrdFile plans/prd-wordpress.json -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10
 ```
 
 ## Validate with JSON Schema

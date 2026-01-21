@@ -10,12 +10,16 @@
    Options: `-Force` to overwrite; `-Scope AllUsers` (admin) to install globally.
 
 ## Initialize a project for Ralph
-Run the setup script in the target repo (adds prompts, plans, progress):
+Run the setup command in the target repo (adds prompts, plans, progress):
 ```powershell
-# from the repo root
-pwsh -File ./Setup-RalphProject.ps1
-# overwrite existing prompt/plan/progress if needed
-pwsh -File ./Setup-RalphProject.ps1 -Force
+# Navigate to your project
+cd /path/to/your/project
+
+# Set up Ralph project files
+Setup-RalphProject
+
+# Overwrite existing files if needed
+Setup-RalphProject -Force
 ```
 
 This creates/updates:
