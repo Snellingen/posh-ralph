@@ -28,17 +28,11 @@ function Invoke-RalphCopilot {
     .PARAMETER Model
     Model to use for Copilot (defaults to claude-sonnet-4.5 or $env:MODEL).
     
-    .PARAMETER NoStream
-    Disable streaming output (quiet mode). By default, copilot output streams in real-time.
-    
     .EXAMPLE
     Invoke-RalphCopilot -PromptFile "prompts/default.txt" -AllowProfile safe
     
     .EXAMPLE
     Invoke-RalphCopilot -PromptFile "prompts/default.txt" -PrdFile "plans/prd.json" -AllowProfile safe -Verbose
-    
-    .EXAMPLE
-    Invoke-RalphCopilot -PromptFile "prompts/default.txt" -AllowProfile safe -NoStream
     #>
     [CmdletBinding()]
     param(
@@ -106,6 +100,8 @@ function Invoke-RalphCopilot {
         $toolArgs = Get-CopilotToolArgs -AllowProfile $AllowProfile -AllowTools $AllowTools -DenyTools $DenyTools
 
         # Build copilot command
+        # Note: Copilot CLI only supports true streaming in interactive UI mode.
+        # In non-interactive mode (-p flag), output is buffered until completion.
         $copilotArgs = @(
             '--add-dir', $PWD
             '--model', $Model
@@ -113,7 +109,7 @@ function Invoke-RalphCopilot {
             '-p', "@$combinedPromptFile Follow the attached prompt."
         )
         
-        # Add streaming control
+        # Stream control has no effect in non-interactive mode, but set it anyway
         if ($NoStream) {
             $copilotArgs += @('--stream', 'off')
         }
@@ -122,22 +118,12 @@ function Invoke-RalphCopilot {
 
         Write-Verbose "Invoking: copilot $($copilotArgs -join ' ')"
         Write-Host "Invoking GitHub Copilot CLI..." -ForegroundColor Yellow
-        if (-not $NoStream) {
-            Write-Host "(Streaming mode - output will appear in real-time)" -ForegroundColor Gray
-        }
+        Write-Host "(Output will appear when copilot completes - CLI limitation)" -ForegroundColor Gray
         Write-Host ""
 
-        # Invoke copilot
-        if ($NoStream) {
-            # Quiet mode: capture all output
-            $output = & copilot @copilotArgs 2>&1
-            $exitCode = $LASTEXITCODE
-        } else {
-            # Streaming mode: show output in real-time
-            & copilot @copilotArgs
-            $exitCode = $LASTEXITCODE
-            $output = "" # No output captured in streaming mode
-        }
+        # Invoke copilot and capture output
+        $output = & copilot @copilotArgs 2>&1
+        $exitCode = $LASTEXITCODE
         
         Write-Host ""
         Write-Host "Copilot invocation complete (exit code: $exitCode)" -ForegroundColor Yellow

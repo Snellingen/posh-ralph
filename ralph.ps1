@@ -115,7 +115,6 @@ Options:
   -AllowTools <spec1>,<spec2>  Allow specific tools (comma-separated array). Example: -AllowTools write,'shell(git:*)'
   -DenyTools <spec1>,<spec2>   Deny specific tools (comma-separated array). Example: -DenyTools 'shell(rm)','shell(npm)'
   -Model <model>               AI model to use (default: claude-sonnet-4.5). Use -ListModels to see all options.
-  -NoStream                    Disable streaming output (quiet mode). By default, output streams in real-time.
   -Iterations <N>              Number of iterations to run (must be >= 1).
   -Help                        Show this help.
   -ListModels                  List all available models with their costs.
@@ -123,6 +122,7 @@ Options:
 Notes:
   - You must pass -AllowProfile or at least one -AllowTools.
   - For array parameters, use comma-separated values: -AllowTools tool1,tool2,tool3
+  - Note: Copilot CLI only streams output in interactive UI mode. In script mode, output appears when complete.
 "@
 }
 
@@ -262,10 +262,6 @@ if (-not [string]::IsNullOrWhiteSpace($Model)) {
     $invokeParams['Model'] = $Model
 }
 
-if ($NoStream) {
-    $invokeParams['NoStream'] = $true
-}
-
 # Determine effective model
 $effectiveModel = if ($Model) { 
     $Model 
@@ -293,8 +289,8 @@ for ($i = 1; $i -le $Iterations; $i++) {
     try {
         $result = Invoke-RalphCopilot @invokeParams
         
-        # Only write output if in NoStream mode (otherwise already displayed)
-        if ($NoStream -and $result.Output) {
+        # Always write output
+        if ($result.Output) {
             Write-Output $result.Output
         }
 
@@ -303,8 +299,8 @@ for ($i = 1; $i -le $Iterations; $i++) {
             continue
         }
 
-        # Check for completion signal (only relevant in NoStream mode)
-        if ($NoStream -and $result.Output -like '*<promise>COMPLETE</promise>*') {
+        # Check for completion signal
+        if ($result.Output -like '*<promise>COMPLETE</promise>*') {
             Write-Host "PRD complete, exiting." -ForegroundColor Green
             
             # Optional: notify if tt command exists

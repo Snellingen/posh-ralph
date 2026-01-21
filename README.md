@@ -93,9 +93,6 @@ $PSVersionTable.PSVersion
 # Use a custom model
 $env:MODEL = "claude-opus-4.5"
 .\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
-
-# Disable streaming (quiet mode)
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10 -NoStream
 ```
 
 **Output:** Ralph displays the model and cost at startup:
@@ -109,7 +106,7 @@ Iterations: 10
 ```
 Cost is color-coded: **Green** (free), **Yellow** (0.33x), **White** (1.0x), **Red** (3.0x)
 
-**Streaming:** By default, copilot output streams in real-time so you can see what's happening. Use `-NoStream` for quiet mode.
+> **Note:** Copilot CLI only supports real-time streaming in interactive UI mode. When run from scripts, output appears when each iteration completes. You'll see "Invoking GitHub Copilot CLI..." while it's working.
 
 ### Single Test Run
 
@@ -119,9 +116,6 @@ Cost is color-coded: **Green** (free), **Yellow** (0.33x), **White** (1.0x), **R
 
 # Run with verbose output
 .\ralph-once.ps1 -PromptFile prompts/default.txt -AllowProfile safe -Verbose
-
-# Disable streaming (quiet mode)
-.\ralph-once.ps1 -PromptFile prompts/default.txt -AllowProfile safe -NoStream
 ```
 
 ### Show Help
@@ -227,7 +221,6 @@ Runs Copilot up to N iterations. Stops early on `<promise>COMPLETE</promise>`.
 | `-AllowTools <spec>`     | Allow specific tool (repeatable)     | —                     |
 | `-DenyTools <spec>`      | Deny specific tool (repeatable)      | —                     |
 | `-Model <model>`         | AI model to use                      | `claude-sonnet-4.5`   |
-| `-NoStream`              | Disable streaming (quiet mode)       | —                     |
 | `-Iterations <N>`        | Number of iterations (required)      | —                     |
 | `-Verbose`               | Show verbose output                  | —                     |
 | `-Help`                  | Show help                            | —                     |
