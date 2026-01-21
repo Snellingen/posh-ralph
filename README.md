@@ -15,17 +15,22 @@ This repository targets **Windows (PowerShell 7+)** as the primary platform and 
 ## Quick Start
 
 ```powershell
-# Clone and enter the repo
+# 1. Install the module
 git clone https://github.com/Snellingen/posh-ralph
 cd posh-ralph
+pwsh -File ./Install-RalphModule.ps1
 
-# Add your work items to plans/prd.json
+# 2. Set up Ralph in your project
+cd /path/to/your/project
+Setup-RalphProject
 
-# Test with a single run
-.\ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+# 3. Edit your work items in plans/prd.json
 
-# Run multiple iterations
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+# 4. Run Ralph with a single iteration
+Invoke-Ralph -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+
+# 5. Run multiple iterations
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 Check `progress.txt` for a log of what was done.
@@ -63,47 +68,53 @@ Ralph implements the ["Ralph Wiggum" technique](https://www.humanlayer.dev/blog/
 
 ---
 
-## Installation (Dev)
+## Installation
+
+### Install as a PowerShell Module (Recommended)
 
 ```powershell
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/Snellingen/posh-ralph.git
 cd posh-ralph
 
-# Verify PowerShell version (must be 7.0+)
+# 2. Verify PowerShell version (must be 7.0+)
 $PSVersionTable.PSVersion
 
-# Run directly
-.\ralph-once.ps1 -Help
-```
-
-### Install as a PowerShell module (per-user)
-
-```powershell
-# From repo root
+# 3. Install the module (per-user)
 pwsh -File ./Install-RalphModule.ps1
+
+# 4. Verify installation
 Get-Command -Module PoshRalph
 ```
 
-Options:
-- `-Force` to overwrite an existing installation
-- `-Scope AllUsers` to install under $env:ProgramFiles (requires admin)
-- `-ModuleVersion 1.3.0` to override the version (defaults to the manifest value)
+**Installation Options:**
+- `-Force` — Overwrite an existing installation
+- `-Scope AllUsers` — Install under $env:ProgramFiles (requires admin)
+- `-ModuleVersion 1.3.0` — Override the version (defaults to the manifest value)
 
-Then, in any repo, scaffold the required files and run Ralph:
+### Set Up Ralph in Your Project
+
+After installing the module, set up Ralph in any project:
 
 ```powershell
-pwsh -File ./Setup-RalphProject.ps1
-Invoke-RalphCopilot -PromptFile "prompts/default.txt" -PrdFile "plans/prd.json" -AllowProfile safe
+# Navigate to your project
+cd /path/to/your/project
+
+# Set up Ralph project files
+Setup-RalphProject
 ```
 
-Setup script creates:
-- prompts/default.txt
-- plans/prd.json
-- plans/prd.schema.json (JSON Schema)
-- progress.txt
-- RALPH-GETTING-STARTED.md
-- test-coverage-progress.txt
+The `Setup-RalphProject` command creates:
+- `prompts/default.txt` — Default prompt template
+- `plans/prd.json` — Your work items (PRD)
+- `plans/prd.schema.json` — JSON Schema for validation
+- `progress.txt` — Progress log
+- `RALPH-GETTING-STARTED.md` — Getting started guide
+- `test-coverage-progress.txt` — Test coverage tracking
+
+**Setup Options:**
+- `-Force` — Overwrite existing files
+- `-TargetPath <path>` — Set up in a specific directory
 
 ---
 
@@ -113,14 +124,14 @@ Setup script creates:
 
 ```powershell
 # Run with a prompt and PRD for 10 iterations
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
 # Run with verbose output
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10 -Verbose
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10 -Verbose
 
 # Use a custom model
 $env:MODEL = "claude-opus-4.5"
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 **Output:** Ralph displays the model and cost at startup:
@@ -140,20 +151,20 @@ Cost is color-coded: **Green** (free), **Yellow** (0.33x), **White** (1.0x), **R
 
 ```powershell
 # Test with a single iteration
-.\ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+Invoke-Ralph -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
 
 # Run with verbose output
-.\ralph-once.ps1 -PromptFile prompts/default.txt -AllowProfile safe -Verbose
+Invoke-Ralph -PromptFile prompts/default.txt -AllowProfile safe -Verbose
 ```
 
 ### Show Help
 
 ```powershell
-# Show help for the loop script
-.\ralph.ps1 -Help
+# Show help for the loop command
+Get-Help Invoke-RalphCopilot -Full
 
-# Show help for the single-run script
-.\ralph-once.ps1 -Help
+# Show help for the single-run command
+Get-Help Invoke-Ralph -Full
 ```
 
 ---
@@ -166,14 +177,14 @@ You can specify a model using the `-Model` parameter or the `MODEL` environment 
 
 ```powershell
 # List all available models
-.\ralph.ps1 -ListModels
+Invoke-RalphCopilot -ListModels
 
 # Use a specific model with parameter
-.\ralph.ps1 -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
 # Use environment variable
 $env:MODEL = "claude-opus-4.5"
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 **Available models** (relative cost):
@@ -184,7 +195,12 @@ $env:MODEL = "claude-opus-4.5"
 
 **Update model list from copilot CLI:**
 
+> **Note:** This command is only available when running from the repository directory.
+
 ```powershell
+# Navigate to the posh-ralph repository
+cd /path/to/posh-ralph
+
 # Update the model list when new models are available
 .\Update-ModelList.ps1
 
@@ -221,7 +237,7 @@ See the [`plans/`](plans/) folder for more examples.
 Prompts are required. Use any prompt file:
 
 ```powershell
-.\ralph.ps1 -PromptFile prompts/my-prompt.txt -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/my-prompt.txt -AllowProfile safe -Iterations 10
 ```
 
 > **Note:** Custom prompts require `-AllowProfile` or `-AllowTools`.
@@ -230,12 +246,12 @@ Prompts are required. Use any prompt file:
 
 ## Command Reference
 
-### `ralph.ps1` — Looped Runner
+### `Invoke-RalphCopilot` — Looped Runner
 
 Runs Copilot up to N iterations. Stops early on `<promise>COMPLETE</promise>`.
 
 ```powershell
-.\ralph.ps1 [options] -Iterations <N>
+Invoke-RalphCopilot [options] -Iterations <N>
 ```
 
 **Options:**
@@ -257,45 +273,73 @@ Runs Copilot up to N iterations. Stops early on `<promise>COMPLETE</promise>`.
 **Examples:**
 
 ```powershell
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
 # Use a faster/cheaper model
-.\ralph.ps1 -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
 # With verbose output
-.\ralph.ps1 -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10 -Verbose
+Invoke-RalphCopilot -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10 -Verbose
 
 # Environment variable override
 $env:MODEL = "claude-opus-4.5"
-.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
-### `ralph-once.ps1` — Single Run
+### `Invoke-Ralph` — Single Run
 
 Runs Copilot once. Great for testing.
 
 ```powershell
-.\ralph-once.ps1 [options]
+Invoke-Ralph [options]
 ```
 
 **Options:**
 
-Same as `ralph.ps1` except no `-Iterations` parameter.
+Same as `Invoke-RalphCopilot` except no `-Iterations` parameter.
 
 **Examples:**
 
 ```powershell
-.\ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+Invoke-Ralph -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
 
 # Use a specific model
-.\ralph-once.ps1 -Model gpt-5-mini -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+Invoke-Ralph -Model gpt-5-mini -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
 
 # With verbose output
-.\ralph-once.ps1 -PromptFile prompts/wp.txt -AllowProfile locked -Verbose
+Invoke-Ralph -PromptFile prompts/wp.txt -AllowProfile locked -Verbose
 
 # Environment variable override
 $env:MODEL = "claude-opus-4.5"
-.\ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+Invoke-Ralph -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+```
+
+### `Setup-RalphProject` — Project Setup
+
+Sets up Ralph in your project directory with all required files.
+
+```powershell
+Setup-RalphProject [-TargetPath <path>] [-Force]
+```
+
+**Options:**
+
+| Option                | Description                                     | Default        |
+|-----------------------|-------------------------------------------------|----------------|
+| `-TargetPath <path>`  | Directory to set up (defaults to current)       | `.` (current)  |
+| `-Force`              | Overwrite existing files                        | —              |
+
+**Examples:**
+
+```powershell
+# Set up in current directory
+Setup-RalphProject
+
+# Set up in specific directory
+Setup-RalphProject -TargetPath /path/to/project
+
+# Overwrite existing files
+Setup-RalphProject -Force
 ```
 
 ### Permission Profiles
@@ -311,7 +355,7 @@ $env:MODEL = "claude-opus-4.5"
 **Custom tools:** If you pass `-AllowTools`, it replaces the profile defaults:
 
 ```powershell
-.\ralph.ps1 -PromptFile prompts/wp.txt -AllowTools write -AllowTools 'shell(composer:*)' -Iterations 10
+Invoke-RalphCopilot -PromptFile prompts/wp.txt -AllowTools write -AllowTools 'shell(composer:*)' -Iterations 10
 ```
 
 ### Environment Variables
@@ -324,11 +368,13 @@ $env:MODEL = "claude-opus-4.5"
 
 ## Cross-Platform Note
 
-If you have **PowerShell 7+** on Linux/macOS, you can run posh-ralph:
+If you have **PowerShell 7+** on Linux/macOS, you can use posh-ralph after installing the module:
 
 ```powershell
 # Linux/macOS with PowerShell 7+
-pwsh -File ./ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+pwsh -File ./Install-RalphModule.ps1
+Setup-RalphProject
+Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 > ⚠️ This path is **not tested** in this repo yet. Please open issues with findings.
@@ -415,7 +461,7 @@ Pass a comma-separated list:
 Example:
 
 ```powershell
-.\ralph.ps1 -PromptFile prompts/wordpress-plugin-agent.txt `
+Invoke-RalphCopilot -PromptFile prompts/wordpress-plugin-agent.txt `
   -Skill wp-block-development,wp-cli `
   -PrdFile plans/prd.json `
   -AllowProfile safe `
@@ -424,15 +470,28 @@ Example:
 
 ---
 
-## Testing Prompts
+## Local Development
 
-Run a single prompt manually (typical for quick validation):
+If you want to contribute to posh-ralph or test changes locally without installing the module:
 
 ```powershell
-pwsh -File ./ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
-```
+# Clone the repository
+git clone https://github.com/Snellingen/posh-ralph.git
+cd posh-ralph
 
-For iterative runs, use `ralph.ps1` with `-Iterations` as shown in the Usage section.
+# Verify PowerShell version (must be 7.0+)
+$PSVersionTable.PSVersion
+
+# Run directly using local scripts
+.\ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+
+# Run multiple iterations
+.\ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+
+# Show help
+.\ralph.ps1 -Help
+.\ralph-once.ps1 -Help
+```
 
 ---
 
