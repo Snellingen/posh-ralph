@@ -7,7 +7,7 @@ Ralph single-run script - runs GitHub Copilot CLI once.
 
 .DESCRIPTION
 Runs GitHub Copilot CLI a single time with the specified prompt, PRD, skills, and tool permissions.
-This is the PowerShell implementation of ralph-once.sh.
+PowerShell-native single-run entry point.
 
 .PARAMETER PromptFile
 Path to the prompt file (required).
@@ -37,7 +37,8 @@ Show help message.
 .\ralph-once.ps1 -PromptFile prompts/default.txt -AllowProfile safe -Verbose
 
 .NOTES
-Ralph version: 1.1.0
+PowerShell-native Ralph runner.
+Ralph version: 1.3.0
 Requires PowerShell 7.0 or higher.
 #>
 
@@ -66,7 +67,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet(
-        
+
         'claude-sonnet-4.5',
         'claude-haiku-4.5',
         'claude-opus-4.5',
@@ -81,7 +82,7 @@ param(
         'gpt-5-mini',
         'gpt-4.1',
         'gemini-3-pro-preview'
-    
+
     )]
     [string]$Model,
 
@@ -144,7 +145,7 @@ Example: .\ralph-once.ps1 -Model claude-haiku-4.5 -PromptFile prompts/default.tx
 
 function Get-ModelCost {
     param([string]$Model)
-    
+
     $costs = @{
         'claude-sonnet-4.5' = '1.0x'
         'claude-haiku-4.5' = '0.33x'
@@ -161,7 +162,7 @@ function Get-ModelCost {
         'gpt-4.1' = 'free'
         'gemini-3-pro-preview' = '1.0x'
     }
-    
+
     if ($costs.ContainsKey($Model)) {
         return $costs[$Model]
     }
@@ -249,12 +250,12 @@ if (-not [string]::IsNullOrWhiteSpace($Model)) {
 }
 
 # Determine effective model
-$effectiveModel = if ($Model) { 
-    $Model 
-} elseif ($env:MODEL) { 
-    $env:MODEL 
-} else { 
-    'claude-sonnet-4.5' 
+$effectiveModel = if ($Model) {
+    $Model
+} elseif ($env:MODEL) {
+    $env:MODEL
+} else {
+    'claude-sonnet-4.5'
 }
 
 $modelCost = Get-ModelCost -Model $effectiveModel
@@ -269,12 +270,12 @@ Write-Host "==============================" -ForegroundColor Cyan
 # Run Copilot
 try {
     $result = Invoke-RalphCopilot @invokeParams
-    
+
     # Always write output
     if ($result.Output) {
         Write-Output $result.Output
     }
-    
+
     exit $result.ExitCode
 }
 catch {

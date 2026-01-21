@@ -316,7 +316,7 @@ $env:MODEL = "claude-opus-4.5"
 
 If you have **PowerShell 7+** on Linux/macOS, you can run posh-ralph:
 
-```bash
+```powershell
 # Linux/macOS with PowerShell 7+
 pwsh -File ./ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
@@ -350,8 +350,7 @@ pwsh -File ./ralph.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -
 ├── ralph.ps1                  # Looped runner (PowerShell)
 ├── ralph-once.ps1             # Single-run script (PowerShell)
 ├── Update-ModelList.ps1       # Update model list from copilot CLI
-├── ralph.sh                   # Legacy bash looped runner
-└── ralph-once.sh              # Legacy bash single-run script
+└── RALPH.md                   # Module install and project setup guide
 ```
 
 ---
@@ -417,15 +416,13 @@ Example:
 
 ## Testing Prompts
 
-The original bash test harness is available:
+Run a single prompt manually (typical for quick validation):
 
-```bash
-./test/run-prompts.sh
+```powershell
+pwsh -File ./ralph-once.ps1 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
 ```
 
-Logs: `test/log/`
-
-> **Note:** A PowerShell version of the test harness may be added in the future.
+For iterative runs, use `ralph.ps1` with `-Iterations` as shown in the Usage section.
 
 ---
 

@@ -40,10 +40,10 @@ A JSON array of work items:
 
 ## Per-Prompt PRDs
 
-Use `--prd` to specify a different PRD file:
+Use `-PrdFile` to specify a different PRD file:
 
-```bash
-./ralph.sh --prd plans/prd-wordpress.json --prompt prompts/wp.txt --allow-profile safe 10
+```powershell
+pwsh -File ./ralph.ps1 -PrdFile plans/prd-wordpress.json -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10
 ```
 
 ## Example Only

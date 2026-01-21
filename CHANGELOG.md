@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-01-21
+
+### Added
+- Setup-RalphProject.ps1 now creates RALPH-GETTING-STARTED.md alongside prompt/PRD/progress templates.
+- README documents installing the module and running Ralph from any repo.
+
+### Changed
+- Skills load from ./skills by default with fallback to ./test/skills for legacy layouts.
+
+### Removed
+- Legacy shell runners (ralph.sh, ralph-once.sh) and the bash test harness (test/run-prompts.sh); docs now reference the PowerShell scripts.
+
 ## [1.1.0] - 2026-01-12
 
 ### Added
