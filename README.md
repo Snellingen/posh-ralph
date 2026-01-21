@@ -130,8 +130,7 @@ Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -All
 Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10 -Verbose
 
 # Use a custom model
-$env:MODEL = "claude-opus-4.5"
-Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+Invoke-RalphCopilot -Model claude-opus-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 **Output:** Ralph displays the model and cost at startup:
@@ -173,16 +172,16 @@ Get-Help Invoke-Ralph -Full
 
 ### Choose a Model
 
-You can specify a model using the `-Model` parameter or the `MODEL` environment variable:
+You can specify a model using the `-Model` parameter (recommended) or the `MODEL` environment variable as a fallback:
 
 ```powershell
-# List all available models
+# List all available models (with autocomplete support)
 Invoke-RalphCopilot -ListModels
 
-# Use a specific model with parameter
+# Use a specific model with parameter (recommended - has autocomplete)
 Invoke-RalphCopilot -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
-# Use environment variable
+# Alternative: Use environment variable as fallback
 $env:MODEL = "claude-opus-4.5"
 Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
@@ -281,9 +280,8 @@ Invoke-RalphCopilot -Model claude-haiku-4.5 -PromptFile prompts/default.txt -Prd
 # With verbose output
 Invoke-RalphCopilot -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10 -Verbose
 
-# Environment variable override
-$env:MODEL = "claude-opus-4.5"
-Invoke-RalphCopilot -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
+# Use a specific model
+Invoke-RalphCopilot -Model claude-opus-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 ```
 
 ### `Invoke-Ralph` — Single Run
@@ -309,9 +307,8 @@ Invoke-Ralph -Model gpt-5-mini -PromptFile prompts/default.txt -PrdFile plans/pr
 # With verbose output
 Invoke-Ralph -PromptFile prompts/wp.txt -AllowProfile locked -Verbose
 
-# Environment variable override
-$env:MODEL = "claude-opus-4.5"
-Invoke-Ralph -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
+# Use a specific model
+Invoke-Ralph -Model claude-opus-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe
 ```
 
 ### `Setup-RalphProject` — Project Setup
@@ -360,9 +357,11 @@ Invoke-RalphCopilot -PromptFile prompts/wp.txt -AllowTools write -AllowTools 'sh
 
 ### Environment Variables
 
-| Variable | Description        | Default              |
-|----------|--------------------|----------------------|
-| `MODEL`  | Model to use       | `claude-sonnet-4.5`  |
+| Variable | Description                                 | Default              |
+|----------|---------------------------------------------|----------------------|
+| `MODEL`  | Model to use (prefer `-Model` parameter)   | `claude-sonnet-4.5`  |
+
+> **Note:** Using the `-Model` parameter is recommended over the environment variable as it provides autocomplete support for available models.
 
 ---
 
