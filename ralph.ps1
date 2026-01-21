@@ -100,6 +100,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $RALPH_VERSION = "1.1.0"
 
+# Ensure Unicode glyphs (e.g., checkmarks) render correctly in Windows consoles.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.UTF8Encoding]::new()
+
 function Show-Usage {
     @"
 Usage:
