@@ -80,13 +80,15 @@ $PSVersionTable.PSVersion
 ### Install as a PowerShell module (per-user)
 
 ```powershell
-$src = "C:\\Users\\$env:USERNAME\\Git\\posh-ralph\\src\\PoshRalph"
-$dest = "$HOME\\Documents\\PowerShell\\Modules\\PoshRalph\\1.3.0"
-New-Item -ItemType Directory -Force -Path $dest | Out-Null
-Copy-Item "$src\\*" $dest -Recurse -Force
-Import-Module PoshRalph -Force
+# From repo root
+pwsh -File ./Install-RalphModule.ps1
 Get-Command -Module PoshRalph
 ```
+
+Options:
+- `-Force` to overwrite an existing installation
+- `-Scope AllUsers` to install under $env:ProgramFiles (requires admin)
+- `-ModuleVersion 1.3.0` to override the version (defaults to the manifest value)
 
 Then, in any repo, scaffold the required files and run Ralph:
 
@@ -94,6 +96,14 @@ Then, in any repo, scaffold the required files and run Ralph:
 pwsh -File ./Setup-RalphProject.ps1
 Invoke-RalphCopilot -PromptFile "prompts/default.txt" -PrdFile "plans/prd.json" -AllowProfile safe
 ```
+
+Setup script creates:
+- prompts/default.txt
+- plans/prd.json
+- plans/prd.schema.json (JSON Schema)
+- progress.txt
+- RALPH-GETTING-STARTED.md
+- test-coverage-progress.txt
 
 ---
 

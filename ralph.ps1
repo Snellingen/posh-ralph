@@ -213,19 +213,31 @@ if (-not [string]::IsNullOrWhiteSpace($Skill)) {
     $skillsArray = $Skill -split ',' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 }
 
-# Import the PoshRalph module
-$modulePath = Join-Path $PSScriptRoot "src" "PoshRalph" "PoshRalph.psd1"
-if (-not (Test-Path $modulePath)) {
-    Write-Error "Error: PoshRalph module not found at: $modulePath"
-    exit 1
-}
-
+# Import the PoshRalph module (prefer installed module, fall back to local path)
+$moduleImported = $false
 try {
-    Import-Module $modulePath -Force
+    Import-Module PoshRalph -ErrorAction Stop
+    $moduleImported = $true
 }
 catch {
-    Write-Error "Error: Failed to import PoshRalph module: $_"
-    exit 1
+    # Ignore and try local path
+}
+
+if (-not $moduleImported) {
+    $modulePath = Join-Path $PSScriptRoot "src" "PoshRalph" "PoshRalph.psd1"
+    if (-not (Test-Path $modulePath)) {
+        Write-Error "Error: PoshRalph module not found (installed module load failed and local path missing at: $modulePath)"
+        exit 1
+    }
+
+    try {
+        Import-Module $modulePath -Force
+        $moduleImported = $true
+    }
+    catch {
+        Write-Error "Error: Failed to import PoshRalph module: $_"
+        exit 1
+    }
 }
 
 # Build parameters for Invoke-RalphCopilot

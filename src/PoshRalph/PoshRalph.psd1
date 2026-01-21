@@ -31,7 +31,7 @@
     PowerShellVersion = '7.0'
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @('Invoke-RalphCopilot')
+    FunctionsToExport = @('Invoke-RalphCopilot', 'Invoke-Ralph', 'Setup-RalphProject')
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport = @()
@@ -55,7 +55,7 @@
             ProjectUri = 'https://github.com/Snellingen/posh-ralph'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'PowerShell rewrite targeting Windows with PowerShell 7+ support'
+            ReleaseNotes = 'PowerShell module with installer script and skills folder updates'
         }
     }
 }
