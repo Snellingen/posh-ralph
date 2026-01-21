@@ -73,7 +73,6 @@ param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet(
-
         'claude-sonnet-4.5',
         'claude-haiku-4.5',
         'claude-opus-4.5',
@@ -88,7 +87,6 @@ param(
         'gpt-5-mini',
         'gpt-4.1',
         'gemini-3-pro-preview'
-
     )]
     [string]$Model,
 
@@ -152,7 +150,6 @@ Example: .\ralph.ps1 -Model claude-haiku-4.5 -PromptFile prompts/default.txt -Al
 
 function Get-ModelCost {
     param([string]$Model)
-
     $costs = @{
         'claude-sonnet-4.5' = '1.0x'
         'claude-haiku-4.5' = '0.33x'
@@ -169,7 +166,6 @@ function Get-ModelCost {
         'gpt-4.1' = 'free'
         'gemini-3-pro-preview' = '1.0x'
     }
-
     if ($costs.ContainsKey($Model)) {
         return $costs[$Model]
     }
@@ -288,7 +284,6 @@ for ($i = 1; $i -le $Iterations; $i++) {
 
     try {
         $result = Invoke-RalphCopilot @invokeParams
-
         # Always write output
         if ($result.Output) {
             Write-Output $result.Output
@@ -302,12 +297,10 @@ for ($i = 1; $i -le $Iterations; $i++) {
         # Check for completion signal
         if ($result.Output -like '*<promise>COMPLETE</promise>*') {
             Write-Host "PRD complete, exiting." -ForegroundColor Green
-
             # Optional: notify if tt command exists
             if (Get-Command tt -ErrorAction SilentlyContinue) {
                 & tt notify "PRD complete after $i iterations"
             }
-
             exit 0
         }
     }
