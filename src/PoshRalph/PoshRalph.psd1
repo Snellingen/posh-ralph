@@ -7,7 +7,7 @@
     RootModule = 'PoshRalph.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.1.0'
+    ModuleVersion = '1.3.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Core')
@@ -25,13 +25,13 @@
     Copyright = '(c) Snellingen. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description = 'PowerShell implementation of the Ralph loop CLI for running GitHub Copilot in iterations'
+    Description = 'PowerShell module for running the Ralph Copilot loop with prompts, PRDs, and skills'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '7.0'
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @('Invoke-RalphCopilot')
+    FunctionsToExport = @('Invoke-RalphCopilot', 'Invoke-Ralph', 'Setup-RalphProject')
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport = @()
@@ -55,7 +55,7 @@
             ProjectUri = 'https://github.com/Snellingen/posh-ralph'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'PowerShell rewrite targeting Windows with PowerShell 7+ support'
+            ReleaseNotes = 'PowerShell module with installer script and skills folder updates'
         }
     }
 }

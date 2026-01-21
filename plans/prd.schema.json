@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ralph PRD",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["category", "description", "steps", "passes"],
+    "additionalProperties": false,
+    "properties": {
+      "category": {
+        "type": "string",
+        "description": "Grouping, e.g. functional, ui, security, performance"
+      },
+      "description": {
+        "type": "string",
+        "description": "One-line requirement description"
+      },
+      "steps": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 1,
+        "description": "Verification steps for the requirement"
+      },
+      "passes": {
+        "type": "boolean",
+        "description": "Whether the requirement is complete/validated"
+      }
+    }
+  }
+}

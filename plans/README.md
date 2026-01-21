@@ -7,6 +7,7 @@ This folder contains the PRD (Product Requirements Document) that Ralph uses to 
 | File | Purpose |
 |------|---------|
 | `prd.json` | Default PRD — your work items |
+| `prd.schema.json` | JSON Schema describing the PRD format |
 | `prd-<name>.json` | Optional per-prompt PRDs |
 
 ## `prd.json` Format
@@ -40,11 +41,15 @@ A JSON array of work items:
 
 ## Per-Prompt PRDs
 
-Use `--prd` to specify a different PRD file:
+Use `-PrdFile` to specify a different PRD file:
 
-```bash
-./ralph.sh --prd plans/prd-wordpress.json --prompt prompts/wp.txt --allow-profile safe 10
+```powershell
+pwsh -File ./ralph.ps1 -PrdFile plans/prd-wordpress.json -PromptFile prompts/wp.txt -AllowProfile safe -Iterations 10
 ```
+
+## Validate with JSON Schema
+
+The PRD format is defined in `plans/prd.schema.json` (draft-07). Validate your PRD with your preferred JSON schema tool.
 
 ## Example Only
 
