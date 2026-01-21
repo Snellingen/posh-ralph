@@ -175,10 +175,10 @@ Get-Help Invoke-Ralph -Full
 You can specify a model using the `-Model` parameter (recommended) or the `MODEL` environment variable as a fallback:
 
 ```powershell
-# List all available models (with auto-complete support)
+# List all available models (with autocomplete support)
 Invoke-RalphCopilot -ListModels
 
-# Use a specific model with parameter (recommended - has auto-complete)
+# Use a specific model with parameter (recommended - has autocomplete)
 Invoke-RalphCopilot -Model claude-haiku-4.5 -PromptFile prompts/default.txt -PrdFile plans/prd.json -AllowProfile safe -Iterations 10
 
 # Alternative: Use environment variable as fallback
@@ -361,7 +361,7 @@ Invoke-RalphCopilot -PromptFile prompts/wp.txt -AllowTools write -AllowTools 'sh
 |----------|---------------------------------------------|----------------------|
 | `MODEL`  | Model to use (prefer `-Model` parameter)   | `claude-sonnet-4.5`  |
 
-> **Note:** Using the `-Model` parameter is recommended over the environment variable as it provides auto-complete support for available models.
+> **Note:** Using the `-Model` parameter is recommended over the environment variable as it provides autocomplete support for available models.
 
 ---
 
